@@ -76,7 +76,7 @@ public class GzipResourceEncodingProviderFactory implements ResourceEncodingProv
                     try {
                         FileUtils.deleteDirectory(f);
                     } catch (IOException e) {
-                        logger.warn("Failed to delete old gzip cache directory", e);
+                        logger.warn("Failed to create gzip cache directory: {}", cacheDir);
                     }
                 }
             }

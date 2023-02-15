@@ -17,8 +17,7 @@
 
 package org.keycloak.models.map.storage.hotRod.common;
 
-import org.infinispan.api.annotations.indexing.Basic;
-import org.infinispan.api.annotations.indexing.Indexed;
+import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoField;
 
 import java.util.List;
@@ -30,13 +29,13 @@ import java.util.Objects;
  * If some change is needed please create a new version of this class and solve the migration on top-level entities.
  *
  */
-@Indexed
+@ProtoDoc("@Indexed")
 public class HotRodAttributeEntity {
-    @Basic(sortable = true)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     @ProtoField(number = 1)
     public String name;
 
-    @Basic(sortable = true)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     @ProtoField(number = 2)
     public List<String> values;
 

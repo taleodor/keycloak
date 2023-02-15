@@ -2,10 +2,7 @@ package org.keycloak.quarkus.runtime.configuration.mappers;
 
 import io.smallrye.config.ConfigSourceInterceptorContext;
 import io.smallrye.config.ConfigValue;
-
-import org.keycloak.common.crypto.FipsMode;
 import org.keycloak.config.HttpOptions;
-import org.keycloak.config.SecurityOptions;
 import org.keycloak.quarkus.runtime.Environment;
 import org.keycloak.quarkus.runtime.Messages;
 import org.keycloak.quarkus.runtime.configuration.MicroProfileConfigProvider;
@@ -14,7 +11,6 @@ import java.io.File;
 import java.nio.file.Paths;
 import java.util.Optional;
 
-import static java.util.Optional.empty;
 import static java.util.Optional.of;
 import static org.keycloak.quarkus.runtime.configuration.mappers.PropertyMapper.fromOption;
 import static org.keycloak.quarkus.runtime.configuration.mappers.PropertyMappers.getMapper;
@@ -29,10 +25,6 @@ final class HttpPropertyMappers {
                 fromOption(HttpOptions.HTTP_ENABLED)
                         .to("quarkus.http.insecure-requests")
                         .transformer(HttpPropertyMappers::getHttpEnabledTransformer)
-                        .paramLabel(Boolean.TRUE + "|" + Boolean.FALSE)
-                        .build(),
-                fromOption(HttpOptions.HTTP_SERVER_ENABLED)
-                        .to("quarkus.http.host-enabled")
                         .paramLabel(Boolean.TRUE + "|" + Boolean.FALSE)
                         .build(),
                 fromOption(HttpOptions.HTTP_HOST)
@@ -83,8 +75,6 @@ final class HttpPropertyMappers {
                         .build(),
                 fromOption(HttpOptions.HTTPS_KEY_STORE_TYPE)
                         .to("quarkus.http.ssl.certificate.key-store-file-type")
-                        .mapFrom(SecurityOptions.FIPS_MODE.getKey())
-                        .transformer(HttpPropertyMappers::resolveKeyStoreType)
                         .paramLabel("type")
                         .build(),
                 fromOption(HttpOptions.HTTPS_TRUST_STORE_FILE)
@@ -141,18 +131,5 @@ final class HttpPropertyMappers {
         return null;
     }
 
-    private static Optional<String> resolveKeyStoreType(Optional<String> value,
-            ConfigSourceInterceptorContext configSourceInterceptorContext) {
-        if (value.isPresent()) {
-            try {
-                if (FipsMode.valueOf(value.get()).equals(FipsMode.strict)) {
-                    return of("BCFKS");
-                }
-                return empty();
-            } catch (IllegalArgumentException ignore) {
-            }
-        }
-        return value;
-    }
 }
 

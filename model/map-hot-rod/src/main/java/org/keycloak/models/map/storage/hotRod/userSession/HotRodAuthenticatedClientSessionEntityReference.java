@@ -17,14 +17,13 @@
 
 package org.keycloak.models.map.storage.hotRod.userSession;
 
-import org.infinispan.api.annotations.indexing.Basic;
-import org.infinispan.api.annotations.indexing.Indexed;
+import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoField;
 
-@Indexed
+@ProtoDoc("@Indexed")
 public class HotRodAuthenticatedClientSessionEntityReference {
 
-    @Basic(sortable = true)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     @ProtoField(number = 1)
     public String clientId;
 

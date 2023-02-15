@@ -20,6 +20,7 @@ import org.hamcrest.Matchers;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.junit.Assert;
 import org.junit.Test;
+import org.keycloak.common.util.Time;
 import org.keycloak.models.AuthenticatedClientSessionModel;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.Constants;
@@ -76,7 +77,7 @@ public class UserSessionProviderModelTest extends KeycloakModelTest {
 
     @Override
     public void createEnvironment(KeycloakSession s) {
-        RealmModel realm = createRealm(s, "test");
+        RealmModel realm = s.realms().createRealm("test");
         realm.setOfflineSessionIdleTimeout(Constants.DEFAULT_OFFLINE_SESSION_IDLE_TIMEOUT);
         realm.setDefaultRole(s.roles().addRealmRole(realm, Constants.DEFAULT_ROLES_ROLE_PREFIX + "-" + realm.getName()));
         realm.setSsoSessionIdleTimeout(1800);
@@ -192,7 +193,7 @@ public class UserSessionProviderModelTest extends KeycloakModelTest {
                         clientSession.setTimestamp(1);
                     });
                 } else {
-                    setTimeOffset(1000);
+                    Time.setOffset(1000);
                 }
             });
 
@@ -210,7 +211,7 @@ public class UserSessionProviderModelTest extends KeycloakModelTest {
                 });
             });
         } finally {
-            setTimeOffset(0);
+            Time.setOffset(0);
             kcSession.getKeycloakSessionFactory().publish(new ResetTimeOffsetEvent());
             if (timer != null && timerTaskCtx != null) {
                 timer.schedule(timerTaskCtx.getRunnable(), timerTaskCtx.getIntervalMillis(), PersisterLastSessionRefreshStoreFactory.DB_LSR_PERIODIC_TASK_NAME);

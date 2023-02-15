@@ -1,19 +1,21 @@
 package org.keycloak.crypto.fips.test;
 
-
 import java.util.UUID;
 
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.SecretKeySpec;
 
-import org.bouncycastle.crypto.CryptoServicesRegistrar;
+import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.keycloak.common.util.BouncyIntegration;
 import org.keycloak.common.util.Environment;
 import org.keycloak.jose.HmacTest;
+import org.keycloak.jose.jws.JWSBuilder;
+import org.keycloak.jose.jws.JWSInput;
+import org.keycloak.jose.jws.crypto.HMACProvider;
 
 
 /**
@@ -29,16 +31,15 @@ public class FIPS1402HmacTest extends HmacTest {
     }
 
     @Test
-    public void testHmacSignaturesWithRandomSecretKeyCreatedByFactory() throws Exception {
-        SecretKeyFactory skFact = SecretKeyFactory.getInstance("HmacSHA256", BouncyIntegration.PROVIDER );
-        SecretKey secretKey = skFact.generateSecret(new SecretKeySpec(UUID.randomUUID().toString().getBytes(), "HmacSHA256"));
-        testHMACSignAndVerify(secretKey, "testHmacSignaturesWithRandomSecretKeyCreatedByFactory");
-    }
+    public void testHmacSignaturesFIPS() throws Exception {
+        //
 
-    @Override
-    public void testHmacSignaturesWithShortSecretKey() throws Exception {
-        // With BCFIPS approved mode, secret key used for HmacSHA256 must be at least 112 bits long (14 characters). Short key won't work
-        Assume.assumeFalse(CryptoServicesRegistrar.isInApprovedOnlyMode());
-        super.testHmacSignaturesWithShortSecretKey();
+        SecretKeyFactory skFact = SecretKeyFactory.getInstance("HmacSHA256", BouncyIntegration.PROVIDER );
+        SecretKey secret = skFact.generateSecret(new SecretKeySpec(UUID.randomUUID().toString().getBytes(), "HmacSHA256"));
+        String encoded = new JWSBuilder().content("12345678901234567890".getBytes())
+                .hmac256(secret);
+        System.out.println("length: " + encoded.length());
+        JWSInput input = new JWSInput(encoded);
+        Assert.assertTrue(HMACProvider.verify(input, secret));
     }
 }

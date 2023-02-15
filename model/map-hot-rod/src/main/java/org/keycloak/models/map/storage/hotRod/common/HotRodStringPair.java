@@ -17,8 +17,7 @@
 
 package org.keycloak.models.map.storage.hotRod.common;
 
-import org.infinispan.api.annotations.indexing.Basic;
-import org.infinispan.api.annotations.indexing.Indexed;
+import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoField;
 
 import java.util.Objects;
@@ -31,14 +30,14 @@ import java.util.Objects;
  * Indexed Hot Rod pair entity where both key and value are {@link String} type. The entity should be used when
  * there is a need to search by key or/and value. Otherwise {@link HotRodPair<String, String>} should be used.
  */
-@Indexed
+@ProtoDoc("@Indexed")
 public class HotRodStringPair {
 
-    @Basic(sortable = true)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     @ProtoField(number = 1)
     public String key;
 
-    @Basic(sortable = true)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     @ProtoField(number = 2)
     public String value;
 

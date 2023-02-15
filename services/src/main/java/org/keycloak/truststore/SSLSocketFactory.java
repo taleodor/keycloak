@@ -18,7 +18,6 @@
 package org.keycloak.truststore;
 
 import org.jboss.logging.Logger;
-import org.keycloak.common.crypto.CryptoIntegration;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -31,11 +30,9 @@ import java.util.Comparator;
  * <p>
  * This SSLSocketFactory can only use truststore configured by TruststoreProvider after the ProviderFactory was
  * initialized using standard Spi load / init mechanism. That will only happen if "truststore" provider is configured
- * by the Keycloak Provider SPI configuration mechanism
+ * in standalone.xml or domain.xml.
  * <p>
- * If TruststoreProvider is not available this SSLSocketFactory will delegate all operations to the SSLSocketFactory
- * returned by {@link org.keycloak.common.crypto.CryptoProvider#wrapFactoryForTruststore(javax.net.ssl.SSLSocketFactory)},
- * which will delegate further to the factory returned by javax.net.ssl.SSLSocketFactory.getDefault().
+ * If TruststoreProvider is not available this SSLSocketFactory will delegate all operations to javax.net.ssl.SSLSocketFactory.getDefault().
  *
  * @author <a href="mailto:mstrukel@redhat.com">Marko Strukelj</a>
  */
@@ -61,7 +58,7 @@ public class SSLSocketFactory extends javax.net.ssl.SSLSocketFactory implements 
             sf = (javax.net.ssl.SSLSocketFactory) javax.net.ssl.SSLSocketFactory.getDefault();
         }
 
-        sslsf = CryptoIntegration.getProvider().wrapFactoryForTruststore(sf);
+        sslsf = sf;
     }
 
     public static synchronized SSLSocketFactory getDefault() {

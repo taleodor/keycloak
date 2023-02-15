@@ -21,12 +21,12 @@
     <parent>
         <groupId>org.jboss</groupId>
         <artifactId>jboss-parent</artifactId>
-        <version>39</version>
+        <version>37</version>
     </parent>
 
     <groupId>org.keycloak.bom</groupId>
     <artifactId>keycloak-bom-parent</artifactId>
-    <version>999-SNAPSHOT</version>
+    <version>20.0.3</version>
 
     <packaging>pom</packaging>
 

@@ -68,6 +68,9 @@ public class WelcomeResource {
     private static final String KEYCLOAK_STATE_CHECKER = "WELCOME_STATE_CHECKER";
 
     @Context
+    protected HttpHeaders headers;
+
+    @Context
     private KeycloakSession session;
 
     public WelcomeResource() {
@@ -214,7 +217,7 @@ public class WelcomeResource {
     }
 
     private static boolean isAdminConsoleEnabled() {
-        return Profile.isFeatureEnabled(Profile.Feature.ADMIN2);
+        return Profile.isFeatureEnabled(Profile.Feature.ADMIN2) || Profile.isFeatureEnabled(Profile.Feature.ADMIN);
     }
 
     private Theme getTheme() {
@@ -243,7 +246,7 @@ public class WelcomeResource {
             ClientConnection clientConnection = session.getContext().getConnection();
             InetAddress remoteInetAddress = InetAddress.getByName(clientConnection.getRemoteAddr());
             InetAddress localInetAddress = InetAddress.getByName(clientConnection.getLocalAddr());
-            String xForwardedFor = session.getContext().getRequestHeaders().getHeaderString("X-Forwarded-For");
+            String xForwardedFor = headers.getHeaderString("X-Forwarded-For");
             logger.debugf("Checking WelcomePage. Remote address: %s, Local address: %s, X-Forwarded-For header: %s", remoteInetAddress.toString(), localInetAddress.toString(), xForwardedFor);
 
             // Access through AJP protocol (loadbalancer) may cause that remoteAddress is "127.0.0.1".
@@ -262,19 +265,19 @@ public class WelcomeResource {
         String stateChecker = Base64Url.encode(SecretGenerator.getInstance().randomBytes());
         String cookiePath = session.getContext().getUri().getPath();
         boolean secureOnly = session.getContext().getUri().getRequestUri().getScheme().equalsIgnoreCase("https");
-        CookieHelper.addCookie(KEYCLOAK_STATE_CHECKER, stateChecker, cookiePath, null, null, 300, secureOnly, true, session);
+        CookieHelper.addCookie(KEYCLOAK_STATE_CHECKER, stateChecker, cookiePath, null, null, 300, secureOnly, true);
         return stateChecker;
     }
 
     private void expireCsrfCookie() {
         String cookiePath = session.getContext().getUri().getPath();
         boolean secureOnly = session.getContext().getUri().getRequestUri().getScheme().equalsIgnoreCase("https");
-        CookieHelper.addCookie(KEYCLOAK_STATE_CHECKER, "", cookiePath, null, null, 0, secureOnly, true, session);
+        CookieHelper.addCookie(KEYCLOAK_STATE_CHECKER, "", cookiePath, null, null, 0, secureOnly, true);
     }
 
     private void csrfCheck(final MultivaluedMap<String, String> formData) {
         String formStateChecker = formData.getFirst("stateChecker");
-        Cookie cookie = session.getContext().getRequestHeaders().getCookies().get(KEYCLOAK_STATE_CHECKER);
+        Cookie cookie = headers.getCookies().get(KEYCLOAK_STATE_CHECKER);
         if (cookie == null) {
             throw new ForbiddenException();
         }

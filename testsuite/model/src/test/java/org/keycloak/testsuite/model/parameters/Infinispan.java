@@ -23,8 +23,6 @@ import org.keycloak.keys.PublicKeyStorageSpi;
 import org.keycloak.keys.infinispan.InfinispanCachePublicKeyProviderFactory;
 import org.keycloak.keys.infinispan.InfinispanPublicKeyStorageProviderFactory;
 import org.keycloak.models.SingleUseObjectSpi;
-import org.keycloak.models.UserLoginFailureSpi;
-import org.keycloak.models.UserSessionSpi;
 import org.keycloak.models.cache.authorization.CachedStoreFactorySpi;
 import org.keycloak.models.cache.infinispan.authorization.InfinispanCacheStoreFactoryProviderFactory;
 import org.keycloak.models.cache.CachePublicKeyProviderSpi;
@@ -100,14 +98,7 @@ public class Infinispan extends KeycloakModelParameters {
               .config("embedded", "true")
               .config("clustered", "true")
               .config("useKeycloakTimeService", "true")
-              .config("nodeName", "node-" + NODE_COUNTER.incrementAndGet())
-          .spi(UserLoginFailureSpi.NAME)
-            .provider(InfinispanUserLoginFailureProviderFactory.PROVIDER_ID)
-              .config("stalledTimeoutInSeconds", "10")
-          .spi(UserSessionSpi.NAME)
-            .provider(InfinispanUserSessionProviderFactory.PROVIDER_ID)
-              .config("sessionPreloadStalledTimeoutInSeconds", "10")
-          ;
+              .config("nodeName", "node-" + NODE_COUNTER.incrementAndGet());
     }
 
     public Infinispan() {

@@ -92,15 +92,10 @@ public class RoleLDAPStorageMapper extends AbstractLDAPStorageMapper implements 
 
             // Import role mappings from LDAP into Keycloak DB
             String roleNameAttr = config.getRoleNameLdapAttribute();
-
-            RoleContainerModel roleContainer = getTargetRoleContainer(realm);
-            if (roleContainer == null) {
-                logger.warnf("Ignored client role grant for federation mapper '%s' as client not found: '%s'", mapperModel.getName(), config.getClientId());
-                return;
-            }
-
             for (LDAPObject ldapRole : ldapRoles) {
                 String roleName = ldapRole.getAttributeAsString(roleNameAttr);
+
+                RoleContainerModel roleContainer = getTargetRoleContainer(realm);
                 RoleModel role = roleContainer.getRole(roleName);
 
                 if (role == null) {
@@ -132,16 +127,11 @@ public class RoleLDAPStorageMapper extends AbstractLDAPStorageMapper implements 
 
         logger.debugf("Syncing roles from LDAP into Keycloak DB. Mapper is [%s], LDAP provider is [%s]", mapperModel.getName(), ldapProvider.getModel().getName());
 
-        RoleContainerModel roleContainer = getTargetRoleContainer(realm);
-        if (roleContainer == null) {
-            logger.warnf("Ignored sync for federation mapper '%s' as client not found: '%s'", mapperModel.getName(), config.getClientId());
-            return syncResult;
-        }
-
         // Send LDAP query to load all roles
         try (LDAPQuery ldapRoleQuery = createRoleQuery(false)) {
             List<LDAPObject> ldapRoles = LDAPUtils.loadAllLDAPObjects(ldapRoleQuery, ldapProvider);
 
+            RoleContainerModel roleContainer = getTargetRoleContainer(realm);
             String rolesRdnAttr = config.getRoleNameLdapAttribute();
             for (LDAPObject ldapRole : ldapRoles) {
                 String roleName = ldapRole.getAttributeAsString(rolesRdnAttr);
@@ -179,12 +169,6 @@ public class RoleLDAPStorageMapper extends AbstractLDAPStorageMapper implements 
 
         logger.debugf("Syncing roles from Keycloak into LDAP. Mapper is [%s], LDAP provider is [%s]", mapperModel.getName(), ldapProvider.getModel().getName());
 
-        RoleContainerModel roleContainer = getTargetRoleContainer(realm);
-        if (roleContainer == null) {
-            logger.warnf("Ignored sync for federation mapper '%s' as client not found: '%s'", mapperModel.getName(), config.getClientId());
-            return syncResult;
-        }
-
         // Send LDAP query to see which roles exists there
         try (LDAPQuery ldapQuery = createRoleQuery(false)) {
             List<LDAPObject> ldapRoles = LDAPUtils.loadAllLDAPObjects(ldapQuery, ldapProvider);
@@ -197,6 +181,7 @@ public class RoleLDAPStorageMapper extends AbstractLDAPStorageMapper implements 
             }
 
 
+            RoleContainerModel roleContainer = getTargetRoleContainer(realm);
             Stream<RoleModel> keycloakRoles = roleContainer.getRolesStream();
 
             Consumer<String> syncRoleFromKCToLDAP = roleName -> {
@@ -257,7 +242,7 @@ public class RoleLDAPStorageMapper extends AbstractLDAPStorageMapper implements 
             }
             ClientModel client = realm.getClientByClientId(clientId);
             if (client == null) {
-                logger.warnf("Cannot find requested client with clientId '%s' in federation mapper '%s'", clientId, mapperModel.getName());
+                throw new ModelException("Can't found requested client with clientId: " + clientId);
             }
             return client;
         }
@@ -311,12 +296,8 @@ public class RoleLDAPStorageMapper extends AbstractLDAPStorageMapper implements 
         // For IMPORT mode, all operations are performed against local DB
         if (mode == LDAPGroupMapperMode.IMPORT) {
             return delegate;
-        }
-        final RoleContainerModel targetRoleContainer = getTargetRoleContainer(realm);
-        if (targetRoleContainer == null) {
-            return delegate;
         } else {
-            return new LDAPRoleMappingsUserDelegate(realm, delegate, ldapUser, targetRoleContainer);
+            return new LDAPRoleMappingsUserDelegate(realm, delegate, ldapUser);
         }
     }
 
@@ -343,11 +324,11 @@ public class RoleLDAPStorageMapper extends AbstractLDAPStorageMapper implements 
         // Avoid loading role mappings from LDAP more times per-request
         private Set<RoleModel> cachedLDAPRoleMappings;
 
-        public LDAPRoleMappingsUserDelegate(RealmModel realm, UserModel user, LDAPObject ldapUser, RoleContainerModel targetRoleContainer) {
+        public LDAPRoleMappingsUserDelegate(RealmModel realm, UserModel user, LDAPObject ldapUser) {
             super(user);
             this.realm = realm;
             this.ldapUser = ldapUser;
-            this.roleContainer = targetRoleContainer;
+            this.roleContainer = getTargetRoleContainer(realm);
         }
 
         @Override

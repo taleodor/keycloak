@@ -31,6 +31,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import org.jboss.resteasy.spi.ResteasyProviderFactory;
 import org.keycloak.authorization.AuthorizationProvider;
 import org.keycloak.authorization.model.ResourceServer;
 import org.keycloak.events.admin.OperationType;
@@ -142,23 +143,39 @@ public class ResourceServerService {
 
     @Path("/resource")
     public ResourceSetService getResourceSetResource() {
-        return new ResourceSetService(this.session, this.resourceServer, this.authorization, this.auth, adminEvent);
+        ResourceSetService resource = new ResourceSetService(this.session, this.resourceServer, this.authorization, this.auth, adminEvent);
+
+        ResteasyProviderFactory.getInstance().injectProperties(resource);
+
+        return resource;
     }
 
     @Path("/scope")
     public ScopeService getScopeResource() {
-        return new ScopeService(this.session, this.resourceServer, this.authorization, this.auth, adminEvent);
+        ScopeService resource = new ScopeService(this.session, this.resourceServer, this.authorization, this.auth, adminEvent);
+
+        ResteasyProviderFactory.getInstance().injectProperties(resource);
+
+        return resource;
     }
 
     @Path("/policy")
     public PolicyService getPolicyResource() {
-        return new PolicyService(this.resourceServer, this.authorization, this.auth, adminEvent);
+        PolicyService resource = new PolicyService(this.resourceServer, this.authorization, this.auth, adminEvent);
+
+        ResteasyProviderFactory.getInstance().injectProperties(resource);
+
+        return resource;
     }
 
     @Path("/permission")
     public Object getPermissionTypeResource() {
         this.auth.realm().requireViewAuthorization();
-        return new PermissionService(this.resourceServer, this.authorization, this.auth, adminEvent);
+        PermissionService resource = new PermissionService(this.resourceServer, this.authorization, this.auth, adminEvent);
+
+        ResteasyProviderFactory.getInstance().injectProperties(resource);
+
+        return resource;
     }
 
     private void createDefaultPermission(ResourceRepresentation resource, PolicyRepresentation policy) {

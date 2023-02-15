@@ -34,12 +34,10 @@ import java.security.spec.ECGenParameterSpec;
 import java.security.spec.ECParameterSpec;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Supplier;
 
 import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKeyFactory;
-import javax.net.ssl.SSLSocketFactory;
 
 import org.keycloak.common.crypto.CertificateUtilsProvider;
 import org.keycloak.common.crypto.CryptoConstants;
@@ -168,10 +166,5 @@ public class WildFlyElytronProvider implements CryptoProvider {
     public Signature getSignature(String sigAlgName) throws NoSuchAlgorithmException {
         return Signature.getInstance(JavaAlgorithm.getJavaAlgorithm(sigAlgName));
             
-    }
-
-    @Override
-    public SSLSocketFactory wrapFactoryForTruststore(SSLSocketFactory delegate) {
-        return delegate;
     }
 }

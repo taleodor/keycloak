@@ -201,7 +201,6 @@ public class KeycloakDeploymentBuilder {
 
 
     public static KeycloakDeployment build(AdapterConfig adapterConfig) {
-        CryptoIntegration.init(KeycloakDeploymentBuilder.class.getClassLoader());
         return new KeycloakDeploymentBuilder().internalBuild(adapterConfig);
     }
 

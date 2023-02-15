@@ -18,6 +18,7 @@ package org.keycloak.services.resources.admin;
 
 import org.jboss.logging.Logger;
 import org.jboss.resteasy.annotations.cache.NoCache;
+import org.jboss.resteasy.spi.ResteasyProviderFactory;
 import org.keycloak.common.ClientConnection;
 import org.keycloak.models.AdminRoles;
 import org.keycloak.models.ClientModel;
@@ -46,6 +47,8 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.CacheControl;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.InputStream;
@@ -65,16 +68,16 @@ import static org.keycloak.utils.StreamsUtil.throwIfEmpty;
  */
 public class RealmsAdminResource {
     protected static final Logger logger = Logger.getLogger(RealmsAdminResource.class);
-    protected final AdminAuth auth;
-    protected final TokenManager tokenManager;
+    protected AdminAuth auth;
+    protected TokenManager tokenManager;
 
-    protected final KeycloakSession session;
+    @Context
+    protected KeycloakSession session;
 
-    protected final ClientConnection clientConnection;
+    @Context
+    protected ClientConnection clientConnection;
 
-    public RealmsAdminResource(KeycloakSession session, AdminAuth auth, TokenManager tokenManager) {
-        this.session = session;
-        this.clientConnection = session.getContext().getConnection();
+    public RealmsAdminResource(AdminAuth auth, TokenManager tokenManager) {
         this.auth = auth;
         this.tokenManager = tokenManager;
     }
@@ -165,7 +168,8 @@ public class RealmsAdminResource {
      * @return
      */
     @Path("{realm}")
-    public RealmAdminResource getRealmAdmin(@PathParam("realm") final String name) {
+    public RealmAdminResource getRealmAdmin(@Context final HttpHeaders headers,
+                                            @PathParam("realm") final String name) {
         RealmManager realmManager = new RealmManager(session);
         RealmModel realm = realmManager.getRealmByName(name);
         if (realm == null) throw new NotFoundException("Realm not found.");
@@ -179,7 +183,10 @@ public class RealmsAdminResource {
         AdminEventBuilder adminEvent = new AdminEventBuilder(realm, auth, session, clientConnection);
         session.getContext().setRealm(realm);
 
-        return new RealmAdminResource(session, realmAuth, adminEvent);
+        RealmAdminResource adminResource = new RealmAdminResource(realmAuth, realm, tokenManager, adminEvent);
+        ResteasyProviderFactory.getInstance().injectProperties(adminResource);
+        //resourceContext.initResource(adminResource);
+        return adminResource;
     }
 
 }

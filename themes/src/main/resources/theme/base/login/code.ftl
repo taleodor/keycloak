@@ -4,7 +4,7 @@
         <#if code.success>
             ${msg("codeSuccessTitle")}
         <#else>
-            ${kcSanitize(msg("codeErrorTitle", code.error))}
+            ${msg("codeErrorTitle", code.error)}
         </#if>
     <#elseif section = "form">
         <div id="kc-code">
@@ -12,7 +12,7 @@
                 <p>${msg("copyCodeInstruction")}</p>
                 <input id="code" class="${properties.kcTextareaClass!}" value="${code.code}"/>
             <#else>
-                <p id="error">${kcSanitize(code.error)}</p>
+                <p id="error">${code.error}</p>
             </#if>
         </div>
     </#if>

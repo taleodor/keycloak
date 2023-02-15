@@ -92,7 +92,6 @@ import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.stream.Stream;
 
 /**
  * @author <a href="mailto:mposolda@redhat.com">Marek Posolda</a>
@@ -121,9 +120,7 @@ public class TestingOIDCEndpointsApplicationResource {
     @Path("/generate-keys")
     @NoCache
     public Map<String, String> generateKeys(@QueryParam("jwaAlgorithm") String jwaAlgorithm,
-                                            @QueryParam("advertiseJWKAlgorithm") Boolean advertiseJWKAlgorithm,
-                                            @QueryParam("keepExistingKeys") Boolean keepExistingKeys,
-                                            @QueryParam("kid") String kid) {
+            @QueryParam("advertiseJWKAlgorithm") Boolean advertiseJWKAlgorithm) {
         try {
             KeyPair keyPair = null;
             KeyUse keyUse = KeyUse.SIG;
@@ -164,17 +161,14 @@ public class TestingOIDCEndpointsApplicationResource {
                     throw new RuntimeException("Unsupported signature algorithm");
             }
 
-            TestApplicationResourceProviderFactory.OIDCKeyData keyData = new TestApplicationResourceProviderFactory.OIDCKeyData();
-            keyData.setKid(kid); // Can be null. It will be generated in that case
-            keyData.setKeyPair(keyPair);
-            keyData.setKeyType(keyType);
+            clientData.setKeyPair(keyPair);
+            clientData.setKeyType(keyType);
             if (advertiseJWKAlgorithm == null || Boolean.TRUE.equals(advertiseJWKAlgorithm)) {
-                keyData.setKeyAlgorithm(jwaAlgorithm);
+                clientData.setKeyAlgorithm(jwaAlgorithm);
             } else {
-                keyData.setKeyAlgorithm(null);
+                clientData.setKeyAlgorithm(null);
             }
-            keyData.setKeyUse(keyUse);
-            clientData.addKey(keyData, keepExistingKeys != null && keepExistingKeys);
+            clientData.setKeyUse(keyUse);
         } catch (Exception e) {
             throw new BadRequestException("Error generating signing keypair", e);
         }
@@ -194,9 +188,8 @@ public class TestingOIDCEndpointsApplicationResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/get-keys-as-pem")
     public Map<String, String> getKeysAsPem() {
-        TestApplicationResourceProviderFactory.OIDCKeyData keyData = clientData.getFirstKey();
-        String privateKeyPem = PemUtils.encodeKey(keyData.getSigningKeyPair().getPrivate());
-        String publicKeyPem = PemUtils.encodeKey(keyData.getSigningKeyPair().getPublic());
+        String privateKeyPem = PemUtils.encodeKey(clientData.getSigningKeyPair().getPrivate());
+        String publicKeyPem = PemUtils.encodeKey(clientData.getSigningKeyPair().getPublic());
 
         Map<String, String> res = new HashMap<>();
         res.put(PRIVATE_KEY, privateKeyPem);
@@ -209,9 +202,8 @@ public class TestingOIDCEndpointsApplicationResource {
     @Path("/get-keys-as-base64")
     public Map<String, String> getKeysAsBase64() {
         // It seems that PemUtils.decodePrivateKey, decodePublicKey can only treat RSA type keys, not EC type keys. Therefore, these are not used.
-        TestApplicationResourceProviderFactory.OIDCKeyData keyData = clientData.getFirstKey();
-        String privateKeyPem = Base64.encodeBytes(keyData.getSigningKeyPair().getPrivate().getEncoded());
-        String publicKeyPem = Base64.encodeBytes(keyData.getSigningKeyPair().getPublic().getEncoded());
+        String privateKeyPem = Base64.encodeBytes(clientData.getSigningKeyPair().getPrivate().getEncoded());
+        String publicKeyPem = Base64.encodeBytes(clientData.getSigningKeyPair().getPublic().getEncoded());
 
         Map<String, String> res = new HashMap<>();
         res.put(PRIVATE_KEY, privateKeyPem);
@@ -224,27 +216,22 @@ public class TestingOIDCEndpointsApplicationResource {
     @Path("/get-jwks")
     @NoCache
     public JSONWebKeySet getJwks() {
-        Stream<JWK> keysStream = clientData.getKeys().stream()
-                .map(keyData -> {
-                    KeyPair keyPair = keyData.getKeyPair();
-                    String keyAlgorithm = keyData.getKeyAlgorithm();
-                    String keyType = keyData.getKeyType();
-                    KeyUse keyUse = keyData.getKeyUse();
-                    String kid = keyData.getKid();
-
-                    JWKBuilder builder = JWKBuilder.create().algorithm(keyAlgorithm).kid(kid);
-
-                    if (KeyType.RSA.equals(keyType)) {
-                        return builder.rsa(keyPair.getPublic(), keyUse);
-                    } else if (KeyType.EC.equals(keyType)) {
-                        return builder.ec(keyPair.getPublic());
-                    } else {
-                        throw new IllegalArgumentException("Unknown keyType: " + keyType);
-                    }
-                });
-
         JSONWebKeySet keySet = new JSONWebKeySet();
-        keySet.setKeys(keysStream.toArray(JWK[]::new));
+        KeyPair keyPair = clientData.getKeyPair();
+        String keyAlgorithm = clientData.getKeyAlgorithm();
+        String keyType = clientData.getKeyType();
+        KeyUse keyUse = clientData.getKeyUse();
+
+        if (keyPair == null) {
+            keySet.setKeys(new JWK[] {});
+        } else if (KeyType.RSA.equals(keyType)) {
+            keySet.setKeys(new JWK[] { JWKBuilder.create().algorithm(keyAlgorithm).rsa(keyPair.getPublic(), keyUse) });
+        } else if (KeyType.EC.equals(keyType)) {
+            keySet.setKeys(new JWK[] { JWKBuilder.create().algorithm(keyAlgorithm).ec(keyPair.getPublic()) });
+        } else {
+            keySet.setKeys(new JWK[] {});
+        }
+
         return keySet;
         
     }
@@ -309,18 +296,17 @@ public class TestingOIDCEndpointsApplicationResource {
 
         if ("none".equals(jwaAlgorithm)) {
             clientData.setOidcRequest(new JWSBuilder().jsonContent(oidcRequest).none());
-        } else if (clientData.getFirstKey() == null) {
+        } else if (clientData.getSigningKeyPair() == null) {
             throw new BadRequestException("signing key not set");
         } else {
-            TestApplicationResourceProviderFactory.OIDCKeyData keyData = clientData.getFirstKey();
-            PrivateKey privateKey = keyData.getSigningKeyPair().getPrivate();
-            String kid = keyData.getKid() != null ? keyData.getKid() : KeyUtils.createKeyId(keyData.getSigningKeyPair().getPublic());
+            PrivateKey privateKey = clientData.getSigningKeyPair().getPrivate();
+            String kid = KeyUtils.createKeyId(clientData.getSigningKeyPair().getPublic());
             KeyWrapper keyWrapper = new KeyWrapper();
-            keyWrapper.setAlgorithm(keyData.getSigningKeyAlgorithm());
+            keyWrapper.setAlgorithm(clientData.getSigningKeyAlgorithm());
             keyWrapper.setKid(kid);
             keyWrapper.setPrivateKey(privateKey);
             SignatureSignerContext signer;
-            switch (keyData.getSigningKeyAlgorithm()) {
+            switch (clientData.getSigningKeyAlgorithm()) {
                 case Algorithm.ES256:
                 case Algorithm.ES384:
                 case Algorithm.ES512:

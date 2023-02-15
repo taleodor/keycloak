@@ -4,7 +4,6 @@ import org.jboss.logging.Logger;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.LDAPConstants;
 import org.keycloak.storage.ldap.LDAPConfig;
-import org.keycloak.storage.ldap.LDAPUtils;
 import org.keycloak.truststore.TruststoreProvider;
 import org.keycloak.vault.VaultCharSecret;
 
@@ -67,8 +66,6 @@ public final class LDAPContextManager implements AutoCloseable {
     }
 
     private void createLdapContext() throws NamingException {
-        LDAPUtils.setLDAPHostnameToKeycloakSession(session, ldapConfig);
-
         Hashtable<Object, Object> connProp = getConnectionProperties(ldapConfig);
 
         if (!LDAPConstants.AUTH_TYPE_NONE.equals(ldapConfig.getAuthType())) {
@@ -76,7 +73,7 @@ public final class LDAPContextManager implements AutoCloseable {
 
             if (vaultCharSecret != null && !ldapConfig.isStartTls()) {
                 connProp.put(SECURITY_CREDENTIALS, vaultCharSecret.getAsArray()
-                        .orElse(ldapConfig.getBindCredential() != null? ldapConfig.getBindCredential().toCharArray() : null));
+                        .orElse(ldapConfig.getBindCredential().toCharArray()));
             }
         }
 
@@ -90,8 +87,7 @@ public final class LDAPContextManager implements AutoCloseable {
             }
 
             tlsResponse = startTLS(ldapContext, ldapConfig.getAuthType(), ldapConfig.getBindDN(),
-                    vaultCharSecret.getAsArray().orElse(ldapConfig.getBindCredential() != null? ldapConfig.getBindCredential().toCharArray() : null),
-                    sslSocketFactory);
+                    vaultCharSecret.getAsArray().orElse(ldapConfig.getBindCredential().toCharArray()), sslSocketFactory);
 
             // Exception should be already thrown by LDAPContextManager.startTLS if "startTLS" could not be established, but rather do some additional check
             if (tlsResponse == null) {

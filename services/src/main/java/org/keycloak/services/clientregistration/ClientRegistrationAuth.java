@@ -134,6 +134,7 @@ public class ClientRegistrationAuth {
         RegistrationAuth registrationAuth = RegistrationAuth.ANONYMOUS;
 
         if (isBearerToken()) {
+            checkClientProtocol();
 
             if (hasRole(AdminRoles.MANAGE_CLIENTS, AdminRoles.CREATE_CLIENT)) {
                 registrationAuth = RegistrationAuth.AUTHENTICATED;

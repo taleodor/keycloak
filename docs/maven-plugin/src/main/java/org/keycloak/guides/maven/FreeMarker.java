@@ -18,7 +18,8 @@ public class FreeMarker {
     private Map<String, Object> attributes;
     private Configuration configuration;
 
-    public FreeMarker(File srcDir, Map<String, Object> attributes) throws IOException {
+    public FreeMarker(File srcDir, File targetDir, Map<String, Object> attributes) throws IOException {
+        this.targetDir = targetDir;
         this.attributes = attributes;
 
         configuration = new Configuration(Configuration.VERSION_2_3_31);
@@ -28,7 +29,7 @@ public class FreeMarker {
         configuration.setLogTemplateExceptions(false);
     }
 
-    public void template(String template, File targetDir) throws IOException, TemplateException {
+    public void template(String template) throws IOException, TemplateException {
         Template t = configuration.getTemplate(template);
         File out = targetDir.toPath().resolve(template).toFile();
 

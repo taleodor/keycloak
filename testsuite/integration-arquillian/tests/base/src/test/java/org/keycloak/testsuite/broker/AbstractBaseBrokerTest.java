@@ -35,6 +35,7 @@ import org.keycloak.testsuite.Assert;
 import org.keycloak.testsuite.arquillian.annotation.DisableFeature;
 import org.keycloak.testsuite.pages.AccountApplicationsPage;
 import org.keycloak.testsuite.pages.AccountFederatedIdentityPage;
+import org.keycloak.testsuite.pages.AccountPasswordPage;
 import org.keycloak.testsuite.pages.AccountUpdateProfilePage;
 import org.keycloak.testsuite.pages.ErrorPage;
 import org.keycloak.testsuite.pages.IdpConfirmLinkPage;
@@ -92,6 +93,9 @@ public abstract class AbstractBaseBrokerTest extends AbstractKeycloakTest {
 
     @Page
     protected UpdateAccountInformationPage updateAccountInformationPage;
+
+    @Page
+    protected AccountPasswordPage accountPasswordPage;
 
     @Page
     protected ErrorPage errorPage;

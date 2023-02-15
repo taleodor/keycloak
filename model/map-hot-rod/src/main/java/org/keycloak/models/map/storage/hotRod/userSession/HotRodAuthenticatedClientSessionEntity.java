@@ -17,8 +17,6 @@
 
 package org.keycloak.models.map.storage.hotRod.userSession;
 
-import org.infinispan.api.annotations.indexing.Basic;
-import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.protostream.GeneratedSchema;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoDoc;
@@ -44,7 +42,7 @@ import java.util.Set;
         cacheName = "org.keycloak.models.map.storage.ModelEntityUtil.getModelName(org.keycloak.models.UserSessionModel.class)" // Use the same cache name as user-sessions
 )
 @ProtoDoc("schema-version: " + HotRodResourceServerEntity.VERSION)
-@Indexed
+@ProtoDoc("@Indexed")
 public class HotRodAuthenticatedClientSessionEntity extends AbstractHotRodEntity {
 
     @IgnoreForEntityImplementationGenerator
@@ -65,11 +63,10 @@ public class HotRodAuthenticatedClientSessionEntity extends AbstractHotRodEntity
         HotRodAuthenticatedClientSessionEntitySchema INSTANCE = new HotRodAuthenticatedClientSessionEntitySchemaImpl();
     }
 
-    @Basic(projectable = true)
     @ProtoField(number = 1)
     public Integer entityVersion = VERSION;
 
-    @Basic(projectable = true, sortable = true)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     @ProtoField(number = 2)
     public String id;
 

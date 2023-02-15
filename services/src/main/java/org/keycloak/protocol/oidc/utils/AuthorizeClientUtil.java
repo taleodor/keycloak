@@ -18,7 +18,8 @@
 package org.keycloak.protocol.oidc.utils;
 
 import org.jboss.logging.Logger;
-import org.keycloak.http.HttpResponse;
+import org.jboss.resteasy.spi.HttpRequest;
+import org.jboss.resteasy.spi.HttpResponse;
 import org.keycloak.authentication.AuthenticationProcessor;
 import org.keycloak.authentication.ClientAuthenticator;
 import org.keycloak.authentication.ClientAuthenticatorFactory;
@@ -51,7 +52,7 @@ public class AuthorizeClientUtil {
         if (response != null) {
             if (cors != null) {
                 cors.allowAllOrigins();
-                HttpResponse httpResponse = session.getContext().getHttpResponse();
+                HttpResponse httpResponse = session.getContext().getContextObject(HttpResponse.class);
                 cors.build(httpResponse);
             }
             throw new WebApplicationException(response);
@@ -100,7 +101,7 @@ public class AuthorizeClientUtil {
                 .setRealm(realm)
                 .setSession(session)
                 .setUriInfo(session.getContext().getUri())
-                .setRequest(session.getContext().getHttpRequest());
+                .setRequest(session.getContext().getContextObject(HttpRequest.class));
 
         return processor;
     }

@@ -19,7 +19,7 @@
 package org.keycloak.services.x509;
 
 import org.jboss.logging.Logger;
-import org.keycloak.http.HttpRequest;
+import org.jboss.resteasy.spi.HttpRequest;
 import java.security.cert.X509Certificate;
 
 /**
@@ -34,6 +34,8 @@ public class DefaultClientCertificateLookup implements X509ClientCertificateLook
 
     private static final Logger logger = Logger.getLogger(DefaultClientCertificateLookup.class);
 
+    public static final String JAVAX_SERVLET_REQUEST_X509_CERTIFICATE = "javax.servlet.request.X509Certificate";
+
     public DefaultClientCertificateLookup() {
     }
 
@@ -45,7 +47,7 @@ public class DefaultClientCertificateLookup implements X509ClientCertificateLook
     @Override
     public X509Certificate[] getCertificateChain(HttpRequest httpRequest) {
 
-        X509Certificate[] certs = httpRequest.getClientCertificateChain();
+        X509Certificate[] certs = (X509Certificate[]) httpRequest.getAttribute(JAVAX_SERVLET_REQUEST_X509_CERTIFICATE);
         if (logger.isTraceEnabled() && certs != null) {
             for (X509Certificate cert : certs) {
                 logger.tracef("Certificate's SubjectDN => \"%s\"", cert.getSubjectDN().getName());

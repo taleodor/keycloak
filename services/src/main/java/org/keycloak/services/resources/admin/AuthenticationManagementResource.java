@@ -89,14 +89,14 @@ public class AuthenticationManagementResource {
 
     private final RealmModel realm;
     private final KeycloakSession session;
-    private final AdminPermissionEvaluator auth;
-    private final AdminEventBuilder adminEvent;
+    private AdminPermissionEvaluator auth;
+    private AdminEventBuilder adminEvent;
 
     protected static final Logger logger = Logger.getLogger(AuthenticationManagementResource.class);
 
-    public AuthenticationManagementResource(KeycloakSession session, AdminPermissionEvaluator auth, AdminEventBuilder adminEvent) {
+    public AuthenticationManagementResource(RealmModel realm, KeycloakSession session, AdminPermissionEvaluator auth, AdminEventBuilder adminEvent) {
+        this.realm = realm;
         this.session = session;
-        this.realm = session.getContext().getRealm();
         this.auth = auth;
         this.adminEvent = adminEvent.resource(ResourceType.AUTH_FLOW);
     }

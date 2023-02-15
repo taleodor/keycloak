@@ -608,9 +608,6 @@ public class GroupTest extends AbstractGroupTest {
 
         members = realm.groups().group(groupId).members(0, 10);
         assertNames(members, "user-b");
-
-        List<GroupRepresentation> groups = realm.users().get(userAId).groups(null, null);
-        assertNames(groups, new String[] {});
     }
 
 

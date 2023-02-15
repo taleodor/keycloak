@@ -161,6 +161,8 @@ public class ClientAuthSignedJWTTest extends AbstractKeycloakTest {
     @Override
     public void addTestRealms(List<RealmRepresentation> testRealms) {
         RealmBuilder realmBuilder = RealmBuilder.create().name("test")
+                .privateKey("MIICXAIBAAKBgQCrVrCuTtArbgaZzL1hvh0xtL5mc7o0NqPVnYXkLvgcwiC3BjLGw1tGEGoJaXDuSaRllobm53JBhjx33UNv+5z/UMG4kytBWxheNVKnL6GgqlNabMaFfPLPCF8kAgKnsi79NMo+n6KnSY8YeUmec/p2vjO2NjsSAVcWEQMVhJ31LwIDAQABAoGAfmO8gVhyBxdqlxmIuglbz8bcjQbhXJLR2EoS8ngTXmN1bo2L90M0mUKSdc7qF10LgETBzqL8jYlQIbt+e6TH8fcEpKCjUlyq0Mf/vVbfZSNaVycY13nTzo27iPyWQHK5NLuJzn1xvxxrUeXI6A2WFpGEBLbHjwpx5WQG9A+2scECQQDvdn9NE75HPTVPxBqsEd2z10TKkl9CZxu10Qby3iQQmWLEJ9LNmy3acvKrE3gMiYNWb6xHPKiIqOR1as7L24aTAkEAtyvQOlCvr5kAjVqrEKXalj0Tzewjweuxc0pskvArTI2Oo070h65GpoIKLc9jf+UA69cRtquwP93aZKtW06U8dQJAF2Y44ks/mK5+eyDqik3koCI08qaC8HYq2wVl7G2QkJ6sbAaILtcvD92ToOvyGyeE0flvmDZxMYlvaZnaQ0lcSQJBAKZU6umJi3/xeEbkJqMfeLclD27XGEFoPeNrmdx0q10Azp4NfJAY+Z8KRyQCR2BEG+oNitBOZ+YXF9KCpH3cdmECQHEigJhYg+ykOvr1aiZUMFT72HU0jnmQe2FVekuG+LJUt2Tm7GtMjTFoGpf0JwrVuZN39fOYAlo+nTixgeW7X8Y=")
+                .publicKey("MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCrVrCuTtArbgaZzL1hvh0xtL5mc7o0NqPVnYXkLvgcwiC3BjLGw1tGEGoJaXDuSaRllobm53JBhjx33UNv+5z/UMG4kytBWxheNVKnL6GgqlNabMaFfPLPCF8kAgKnsi79NMo+n6KnSY8YeUmec/p2vjO2NjsSAVcWEQMVhJ31LwIDAQAB")
                 .testEventListener();
 
         app1 = ClientBuilder.create()
@@ -498,7 +500,7 @@ public class ClientAuthSignedJWTTest extends AbstractKeycloakTest {
         try {
             // setup Jwks
             String signingAlgorithm = Algorithm.PS256;
-            KeyPair keyPair = setupJwksUrl(signingAlgorithm, false, false, null, clientRepresentation, clientResource);
+            KeyPair keyPair = setupJwksUrl(signingAlgorithm, false, clientRepresentation, clientResource);
             PublicKey publicKey = keyPair.getPublic();
             PrivateKey privateKey = keyPair.getPrivate();
 
@@ -521,7 +523,7 @@ public class ClientAuthSignedJWTTest extends AbstractKeycloakTest {
         try {
             // send a JWS using the default algorithm
             String signingAlgorithm = Algorithm.RS256;
-            KeyPair keyPair = setupJwksUrl(signingAlgorithm, false, false, null, clientRepresentation, clientResource);
+            KeyPair keyPair = setupJwksUrl(signingAlgorithm, false, clientRepresentation, clientResource);
             PublicKey publicKey = keyPair.getPublic();
             PrivateKey privateKey = keyPair.getPrivate();
             oauth.clientId("client2");
@@ -546,38 +548,6 @@ public class ClientAuthSignedJWTTest extends AbstractKeycloakTest {
             revertJwksUriSettings(clientRepresentation, clientResource);
             OIDCAdvancedConfigWrapper.fromClientRepresentation(clientRepresentation).setTokenEndpointAuthSigningAlg(null);
             clientResource.update(clientRepresentation);
-        }
-    }
-
-    // GH issue 14794
-    @Test
-    public void testSuccessWhenMultipleKeysWithSameKid() throws Exception {
-        ClientRepresentation clientRepresentation = app2;
-        ClientResource clientResource = getClient(testRealm.getRealm(), clientRepresentation.getId());
-        clientRepresentation = clientResource.toRepresentation();
-        String origAccessTokenSignedResponseAlg = clientRepresentation.getAttributes().get(OIDCConfigAttributes.ACCESS_TOKEN_SIGNED_RESPONSE_ALG);
-        try {
-            clientRepresentation.getAttributes().put(OIDCConfigAttributes.ACCESS_TOKEN_SIGNED_RESPONSE_ALG, Algorithm.RS512);
-            // setup Jwks
-            String signingAlgorithm = Algorithm.RS256;
-            KeyPair keyPair = setupJwksUrl(signingAlgorithm, true, true, "my-kid", clientRepresentation, clientResource);
-
-            signingAlgorithm = Algorithm.RS512;
-            keyPair = setupJwksUrl(signingAlgorithm, true, true, "my-kid", clientRepresentation, clientResource);
-            PublicKey publicKey = keyPair.getPublic();
-            PrivateKey privateKey = keyPair.getPrivate();
-
-            // test
-            oauth.clientId("client2");
-            JsonWebToken clientAuthJwt = createRequestToken("client2", getRealmInfoUrl());
-            OAuthClient.AccessTokenResponse response = doGrantAccessTokenRequest("test-user@localhost", "password",
-                    createSignledRequestToken(privateKey, publicKey, signingAlgorithm, "my-kid", clientAuthJwt));
-
-            assertEquals(200, response.getStatusCode());
-        } finally {
-            // Revert jwks_url settings and signing algorithm
-            clientRepresentation.getAttributes().put(OIDCConfigAttributes.ACCESS_TOKEN_SIGNED_RESPONSE_ALG, origAccessTokenSignedResponseAlg);
-            revertJwksUriSettings(clientRepresentation, clientResource);
         }
     }
 
@@ -994,7 +964,7 @@ public class ClientAuthSignedJWTTest extends AbstractKeycloakTest {
             parameters
                 .add(new BasicNameValuePair(OAuth2Constants.CLIENT_ASSERTION_TYPE, OAuth2Constants.CLIENT_ASSERTION_TYPE_JWT));
             parameters.add(new BasicNameValuePair(OAuth2Constants.CLIENT_ASSERTION,
-                createSignledRequestToken(privateKey, publicKey, Algorithm.PS256, null, assertion)));
+                createSignledRequestToken(privateKey, publicKey, Algorithm.PS256, assertion)));
 
             try (CloseableHttpResponse resp = sendRequest(oauth.getServiceAccountUrl(), parameters)) {
                 OAuthClient.AccessTokenResponse response = new OAuthClient.AccessTokenResponse(resp);
@@ -1024,7 +994,7 @@ public class ClientAuthSignedJWTTest extends AbstractKeycloakTest {
             parameters
                 .add(new BasicNameValuePair(OAuth2Constants.CLIENT_ASSERTION_TYPE, OAuth2Constants.CLIENT_ASSERTION_TYPE_JWT));
             parameters.add(new BasicNameValuePair(OAuth2Constants.CLIENT_ASSERTION,
-                createSignledRequestToken(privateKey, publicKey, Algorithm.PS256, null, assertion)));
+                createSignledRequestToken(privateKey, publicKey, Algorithm.PS256, assertion)));
 
             try (CloseableHttpResponse resp = sendRequest(oauth.getServiceAccountUrl(), parameters)) {
                 OAuthClient.AccessTokenResponse response = new OAuthClient.AccessTokenResponse(resp);
@@ -1461,14 +1431,13 @@ public class ClientAuthSignedJWTTest extends AbstractKeycloakTest {
     }
 
     private KeyPair setupJwksUrl(String algorithm, ClientRepresentation clientRepresentation, ClientResource clientResource) throws Exception {
-        return setupJwksUrl(algorithm, true, false, null, clientRepresentation, clientResource);
+        return setupJwksUrl(algorithm, true, clientRepresentation, clientResource);
     }
 
-    private KeyPair setupJwksUrl(String algorithm, boolean advertiseJWKAlgorithm, boolean keepExistingKeys, String kid,
-                                 ClientRepresentation clientRepresentation, ClientResource clientResource) throws Exception {
+    private KeyPair setupJwksUrl(String algorithm, boolean advertiseJWKAlgorithm, ClientRepresentation clientRepresentation, ClientResource clientResource) throws Exception {
         // generate and register client keypair
         TestOIDCEndpointsApplicationResource oidcClientEndpointsResource = testingClient.testApp().oidcClientEndpoints();
-        oidcClientEndpointsResource.generateKeys(algorithm, advertiseJWKAlgorithm, keepExistingKeys, kid);
+        oidcClientEndpointsResource.generateKeys(algorithm, advertiseJWKAlgorithm);
         Map<String, String> generatedKeys = oidcClientEndpointsResource.getKeysAsBase64();
         KeyPair keyPair = getKeyPairFromGeneratedBase64(generatedKeys, algorithm);
 
@@ -1541,13 +1510,11 @@ public class ClientAuthSignedJWTTest extends AbstractKeycloakTest {
     }
 
     private String createSignedRequestToken(String clientId, String realmInfoUrl, PrivateKey privateKey, PublicKey publicKey, String algorithm) {
-        return createSignledRequestToken(privateKey, publicKey, algorithm, null, createRequestToken(clientId, realmInfoUrl));
+        return createSignledRequestToken(privateKey, publicKey, algorithm, createRequestToken(clientId, realmInfoUrl));
     }
 
-    private String createSignledRequestToken(PrivateKey privateKey, PublicKey publicKey, String algorithm, String kid, JsonWebToken jwt) {
-        if (kid == null) {
-            kid = KeyUtils.createKeyId(publicKey);
-        }
+    private String createSignledRequestToken(PrivateKey privateKey, PublicKey publicKey, String algorithm, JsonWebToken jwt) {
+        String kid = KeyUtils.createKeyId(publicKey);
         SignatureSignerContext signer = oauth.createSigner(privateKey, kid, algorithm);
         String ret = new JWSBuilder().kid(kid).jsonContent(jwt).sign(signer);
         return ret;

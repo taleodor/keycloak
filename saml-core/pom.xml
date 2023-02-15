@@ -21,7 +21,7 @@
     <parent>
         <artifactId>keycloak-parent</artifactId>
         <groupId>org.keycloak</groupId>
-        <version>999-SNAPSHOT</version>
+        <version>20.0.3</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -104,7 +104,7 @@
                         <id>with-security-manager-all-permissions</id>
                         <goals><goal>test</goal></goals>
                         <configuration>
-                            <argLine>-Dmaven.basedir=${basedir} -Djava.security.manager -Djava.security.policy=${basedir}/src/test/resources/all-permissions.policy -XX:+ExitOnOutOfMemoryError -XX:+HeapDumpOnOutOfMemoryError</argLine>
+                            <argLine>-Dmaven.basedir=${basedir} -Djava.security.manager -Djava.security.policy=${basedir}/src/test/resources/all-permissions.policy</argLine>
                             <test>SecurityActionsTest</test>
                             <skip>${skip.security-manager.tests}</skip>
                         </configuration>
@@ -113,7 +113,7 @@
                         <id>with-security-manager-named-permissions</id>
                         <goals><goal>test</goal></goals>
                         <configuration>
-                            <argLine>-Djava.security.debug=access -Dmaven.basedir=${basedir} -Djava.security.manager -Djava.security.policy=${basedir}/src/test/resources/named-permissions.policy -XX:+ExitOnOutOfMemoryError -XX:+HeapDumpOnOutOfMemoryError</argLine>
+                            <argLine>-Djava.security.debug=access -Dmaven.basedir=${basedir} -Djava.security.manager -Djava.security.policy=${basedir}/src/test/resources/named-permissions.policy</argLine>
                             <test>SecurityActionsTest</test>
                             <skip>${skip.security-manager.tests}</skip>
                         </configuration>                        

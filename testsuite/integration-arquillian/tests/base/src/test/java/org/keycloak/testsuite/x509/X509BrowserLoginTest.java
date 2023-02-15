@@ -516,6 +516,8 @@ public class X509BrowserLoginTest extends AbstractX509AuthenticationTest {
     // KEYCLOAK-6866
     @Test
     public void changeLocaleOnX509InfoPage() {
+        ProfileAssume.assumeCommunity();
+
         AuthenticatorConfigRepresentation cfg = newConfig("x509-browser-config", createLoginSubjectEmail2UsernameOrEmailConfig().getConfig());
         String cfgId = createConfig(browserExecution.getId(), cfg);
         Assert.assertNotNull(cfgId);

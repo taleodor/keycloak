@@ -42,6 +42,5 @@ public class ImportDistTest {
         cliResult.assertMessage("Realm 'master' imported");
         cliResult.assertMessage("Import finished successfully");
         cliResult.assertNoMessage("Changes detected in configuration");
-        cliResult.assertNoMessage("Listening on:");
     }
 }

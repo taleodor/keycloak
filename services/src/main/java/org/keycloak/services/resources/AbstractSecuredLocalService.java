@@ -18,7 +18,7 @@ package org.keycloak.services.resources;
 
 import org.jboss.logging.Logger;
 import org.jboss.resteasy.spi.BadRequestException;
-import org.keycloak.http.HttpRequest;
+import org.jboss.resteasy.spi.HttpRequest;
 import org.keycloak.AbstractOAuthClient;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.OAuthErrorException;
@@ -37,6 +37,7 @@ import org.keycloak.util.TokenUtil;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
@@ -55,25 +56,22 @@ public abstract class AbstractSecuredLocalService {
     private static final Logger logger = Logger.getLogger(AbstractSecuredLocalService.class);
 
     protected final ClientModel client;
-    protected final RealmModel realm;
+    protected RealmModel realm;
 
-    protected final HttpHeaders headers;
-
-    protected final ClientConnection clientConnection;
+    @Context
+    protected HttpHeaders headers;
+    @Context
+    protected ClientConnection clientConnection;
     protected String stateChecker;
-
-    protected final KeycloakSession session;
-
-    protected final HttpRequest request;
+    @Context
+    protected KeycloakSession session;
+    @Context
+    protected HttpRequest request;
     protected Auth auth;
 
-    public AbstractSecuredLocalService(KeycloakSession session, ClientModel client) {
-        this.session = session;
-        this.realm = session.getContext().getRealm();
-        this.clientConnection = session.getContext().getConnection();
+    public AbstractSecuredLocalService(RealmModel realm, ClientModel client) {
+        this.realm = realm;
         this.client = client;
-        this.request = session.getContext().getHttpRequest();
-        this.headers = session.getContext().getRequestHeaders();
     }
 
     @Path("login-redirect")
@@ -82,7 +80,8 @@ public abstract class AbstractSecuredLocalService {
                                   @QueryParam("state") String state,
                                   @QueryParam("error") String error,
                                   @QueryParam("path") String path,
-                                  @QueryParam("referrer") String referrer) {
+                                  @QueryParam("referrer") String referrer,
+                                  @Context HttpHeaders headers) {
         try {
             if (error != null) {
                 if (OAuthErrorException.ACCESS_DENIED.equals(error)) {

@@ -59,7 +59,6 @@ import org.keycloak.models.utils.DefaultKeyProviders;
 import org.keycloak.models.utils.DefaultRequiredActions;
 import org.keycloak.models.utils.KeycloakModelUtils;
 import org.keycloak.models.utils.RepresentationToModel;
-import org.keycloak.partialimport.PartialImportResults;
 import org.keycloak.protocol.oidc.OIDCConfigAttributes;
 import org.keycloak.representations.idm.ApplicationRepresentation;
 import org.keycloak.representations.idm.AuthenticationExecutionExportRepresentation;
@@ -77,7 +76,6 @@ import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.IdentityProviderMapperRepresentation;
 import org.keycloak.representations.idm.IdentityProviderRepresentation;
 import org.keycloak.representations.idm.OAuthClientRepresentation;
-import org.keycloak.representations.idm.PartialImportRepresentation;
 import org.keycloak.representations.idm.ProtocolMapperRepresentation;
 import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.representations.idm.RequiredActionProviderRepresentation;
@@ -89,8 +87,7 @@ import org.keycloak.representations.idm.UserFederationMapperRepresentation;
 import org.keycloak.representations.idm.UserFederationProviderRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.keycloak.storage.ExportImportManager;
-import org.keycloak.storage.ImportRealmFromRepresentationEvent;
-import org.keycloak.storage.PartialImportRealmFromRepresentationEvent;
+import org.keycloak.storage.ImportRealmFromRepresentation;
 import org.keycloak.storage.UserStoragePrivateUtil;
 import org.keycloak.storage.UserStorageProvider;
 import org.keycloak.storage.UserStorageProviderModel;
@@ -114,7 +111,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static org.keycloak.models.utils.DefaultRequiredActions.getDefaultRequiredActionCaseInsensitively;
 import static org.keycloak.models.utils.RepresentationToModel.createCredentials;
 import static org.keycloak.models.utils.RepresentationToModel.createFederatedIdentities;
 import static org.keycloak.models.utils.RepresentationToModel.createGroups;
@@ -156,7 +152,7 @@ public class LegacyExportImportManager implements ExportImportManager {
             throw new ModelException("unable to read contents from stream", e);
         }
         logger.debugv("importRealm: {0}", rep.getRealm());
-        return ImportRealmFromRepresentationEvent.fire(session, rep);
+        return ImportRealmFromRepresentation.fire(session, rep);
     }
 
     @Override
@@ -454,17 +450,6 @@ public class LegacyExportImportManager implements ExportImportManager {
                 DefaultKeyProviders.createProviders(newRealm);
             }
         }
-    }
-
-    @Override
-    public PartialImportResults partialImportRealm(RealmModel realm, InputStream requestBody) {
-        PartialImportRepresentation rep;
-        try {
-            rep = JsonSerialization.readValue(requestBody, PartialImportRepresentation.class);
-        } catch (IOException e) {
-            throw new ModelException("unable to read contents from stream", e);
-        }
-        return PartialImportRealmFromRepresentationEvent.fire(session, rep, realm);
     }
 
     private static RoleModel getOrAddRealmRole(RealmModel realm, String name) {
@@ -870,7 +855,11 @@ public class LegacyExportImportManager implements ExportImportManager {
         }
         if (userRep.getRequiredActions() != null) {
             for (String requiredAction : userRep.getRequiredActions()) {
-                user.addRequiredAction(getDefaultRequiredActionCaseInsensitively(requiredAction));
+                try {
+                    user.addRequiredAction(UserModel.RequiredAction.valueOf(requiredAction.toUpperCase()));
+                } catch (IllegalArgumentException iae) {
+                    user.addRequiredAction(requiredAction);
+                }
             }
         }
         createCredentials(userRep, session, newRealm, user, false);

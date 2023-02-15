@@ -17,9 +17,6 @@
 
 package org.keycloak.models.map.storage.hotRod.user;
 
-import org.infinispan.api.annotations.indexing.Basic;
-import org.infinispan.api.annotations.indexing.Indexed;
-import org.infinispan.api.annotations.indexing.Keyword;
 import org.infinispan.protostream.GeneratedSchema;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoDoc;
@@ -52,7 +49,7 @@ import java.util.Set;
         topLevelEntity = true,
         modelClass = "org.keycloak.models.UserModel"
 )
-@Indexed
+@ProtoDoc("@Indexed")
 @ProtoDoc("schema-version: " + HotRodUserEntity.VERSION)
 public class HotRodUserEntity extends AbstractHotRodEntity {
 
@@ -76,41 +73,42 @@ public class HotRodUserEntity extends AbstractHotRodEntity {
     @IgnoreForEntityImplementationGenerator
     private static final Logger LOG = Logger.getLogger(HotRodUserEntity.class);
 
-    @Basic(projectable = true)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     @ProtoField(number = 1)
     public Integer entityVersion = VERSION;
 
-    @Basic(projectable = true, sortable = true)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     @ProtoField(number = 2)
     public String id;
 
-    @Basic(sortable = true)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     @ProtoField(number = 3)
     public String realmId;
 
-    @Basic(sortable = true)
     @ProtoField(number = 4)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     public String username;
 
-    @Keyword(sortable = true, normalizer = "lowercase")
-    @ProtoField(number = 5)
+    @ProtoField(number = 22)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     public String usernameLowercase;
 
-    @Keyword(sortable = true, normalizer = "lowercase")
-    @ProtoField(number = 6)
+    @ProtoField(number = 5)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES, analyze = Analyze.YES, analyzer = @Analyzer(definition = \"filename\"))")
     public String firstName;
 
-    @ProtoField(number = 7)
+    @ProtoField(number = 6)
     public Long createdTimestamp;
 
-    @Keyword(sortable = true, normalizer = "lowercase")
-    @ProtoField(number = 8)
+    @ProtoField(number = 7)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES, analyze = Analyze.YES, analyzer = @Analyzer(definition = \"filename\"))")
     public String lastName;
 
-    @Keyword(sortable = true, normalizer = "lowercase")
-    @ProtoField(number = 9)
+    @ProtoField(number = 8)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES, analyze = Analyze.YES, analyzer = @Analyzer(definition = \"filename\"))")
     public String email;
 
+    @ProtoField(number = 9)
     /**
      * TODO: Workaround for ISPN-8584
      *
@@ -123,10 +121,10 @@ public class HotRodUserEntity extends AbstractHotRodEntity {
      *
      * In other words it is not possible to combine searching for Analyzed field and non-indexed field in one Ickle query
      */
-    @Basic(sortable = true)
-    @ProtoField(number = 10)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     public Boolean enabled;
 
+    @ProtoField(number = 10)
     /**
      * TODO: Workaround for ISPN-8584
      *
@@ -137,49 +135,48 @@ public class HotRodUserEntity extends AbstractHotRodEntity {
      *
      * In other words it is not possible to combine searching for Analyzed field and non-indexed field in one Ickle query
      */
-    @Basic(sortable = true)
-    @ProtoField(number = 11)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     public Boolean emailVerified;
 
     // This is necessary to be able to dynamically switch unique email constraints on and off in the realm settings
-    @ProtoField(number = 12)
+    @ProtoField(number = 11)
     public String emailConstraint;
 
-    @Basic(sortable = true)
-    @ProtoField(number = 13)
+    @ProtoField(number = 12)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     public Set<HotRodAttributeEntity> attributes;
 
-    @ProtoField(number = 14)
+    @ProtoField(number = 13)
     public Set<String> requiredActions;
 
-    @ProtoField(number = 15)
+    @ProtoField(number = 14)
     public List<HotRodUserCredentialEntity> credentials;
 
-    @Basic(sortable = true)
-    @ProtoField(number = 16)
+    @ProtoField(number = 15)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     public Set<HotRodUserFederatedIdentityEntity> federatedIdentities;
 
-    @Basic(sortable = true)
-    @ProtoField(number = 17)
+    @ProtoField(number = 16)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     public Set<HotRodUserConsentEntity> userConsents;
 
-    @Basic(sortable = true)
-    @ProtoField(number = 18)
+    @ProtoField(number = 17)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     public Set<String> groupsMembership = new HashSet<>();
 
-    @Basic(sortable = true)
-    @ProtoField(number = 19)
+    @ProtoField(number = 18)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     public Set<String> rolesMembership = new HashSet<>();
 
-    @Basic(sortable = true)
-    @ProtoField(number = 20)
+    @ProtoField(number = 19)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     public String federationLink;
 
-    @Basic(sortable = true)
-    @ProtoField(number = 21)
+    @ProtoField(number = 20)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     public String serviceAccountClientLink;
 
-    @ProtoField(number = 22)
+    @ProtoField(number = 21)
     public Long notBefore;
 
     public static abstract class AbstractHotRodUserEntityDelegate extends UpdatableHotRodEntityDelegateImpl<HotRodUserEntity> implements MapUserEntity {

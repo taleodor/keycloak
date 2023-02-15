@@ -40,10 +40,16 @@ public class LegacyAttributes extends DefaultAttributes {
 
     @Override
     public Map<String, List<String>> getReadable() {
-        if(user == null || user.getAttributes() == null)
-            return new HashMap<>();
+        if(user == null)
+            return null;
 
-        return new HashMap<>(user.getAttributes());
+        Map<String, List<String>> attributes = new HashMap<>(user.getAttributes());
+
+        if (attributes.isEmpty()) {
+            return null;
+        }
+
+        return attributes;
     }
 
     @Override

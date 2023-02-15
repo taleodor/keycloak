@@ -24,7 +24,6 @@ import org.keycloak.services.clientpolicy.ClientPolicyManager;
 import org.keycloak.sessions.AuthenticationSessionProvider;
 import org.keycloak.vault.VaultTranscriber;
 
-import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -32,7 +31,7 @@ import java.util.function.Function;
  * @author <a href="mailto:bill@burkecentral.com">Bill Burke</a>
  * @version $Revision: 1 $
  */
-public interface KeycloakSession extends AutoCloseable {
+public interface KeycloakSession {
 
     KeycloakContext getContext();
 
@@ -123,8 +122,6 @@ public interface KeycloakSession extends AutoCloseable {
 
     Object removeAttribute(String attribute);
     void setAttribute(String name, Object value);
-
-    Map<String, Object> getAttributes();
 
     /**
      * Invalidates intermediate states of the given objects, both immediately and at the end of this session.

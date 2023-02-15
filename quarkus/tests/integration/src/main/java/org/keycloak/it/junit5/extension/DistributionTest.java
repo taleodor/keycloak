@@ -30,7 +30,7 @@ public @interface DistributionTest {
 
     boolean debug() default false;
     boolean keepAlive() default false;
-    boolean enableTls() default false;
+    boolean createAdminUser() default false;
 
     enum ReInstall {
 

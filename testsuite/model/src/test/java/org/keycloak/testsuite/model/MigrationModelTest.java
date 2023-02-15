@@ -22,6 +22,7 @@ import org.jboss.logging.Logger;
 import org.junit.Assert;
 import org.junit.Test;
 import org.keycloak.common.Version;
+import org.keycloak.common.util.Time;
 import org.keycloak.connections.jpa.JpaConnectionProvider;
 import org.keycloak.migration.MigrationModel;
 import org.keycloak.migration.ModelVersion;
@@ -43,7 +44,7 @@ public class MigrationModelTest extends KeycloakModelTest {
 
     @Override
     public void createEnvironment(KeycloakSession s) {
-        RealmModel realm = createRealm(s, "realm");
+        RealmModel realm = s.realms().createRealm("realm");
         realm.setDefaultRole(s.roles().addRealmRole(realm, Constants.DEFAULT_ROLES_ROLE_PREFIX + "-" + realm.getName()));
         this.realmId = realm.getId();
     }
@@ -71,12 +72,12 @@ public class MigrationModelTest extends KeycloakModelTest {
             Assert.assertEquals(currentVersion, m.getStoredVersion());
             Assert.assertEquals(m.getResourcesTag(), l.get(0).getId());
 
-            setTimeOffset(-60000);
+            Time.setOffset(-60000);
 
             session.getProvider(DeploymentStateProvider.class).getMigrationModel().setStoredVersion("6.0.0");
             em.flush();
 
-            setTimeOffset(0);
+            Time.setOffset(0);
 
             l = em.createQuery("select m from MigrationModelEntity m ORDER BY m.updatedTime DESC", MigrationModelEntity.class).getResultList();
             Assert.assertEquals(2, l.size());

@@ -18,6 +18,7 @@ package org.keycloak.services.resources.admin;
 
 import org.jboss.logging.Logger;
 import org.jboss.resteasy.annotations.cache.NoCache;
+import org.jboss.resteasy.spi.ResteasyProviderFactory;
 import org.keycloak.events.admin.OperationType;
 import org.keycloak.events.admin.ResourceType;
 import org.keycloak.models.ClientScopeModel;
@@ -37,6 +38,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.stream.Stream;
@@ -50,15 +52,15 @@ import java.util.stream.Stream;
  */
 public class ClientScopesResource {
     protected static final Logger logger = Logger.getLogger(ClientScopesResource.class);
-    protected final RealmModel realm;
-    private final AdminPermissionEvaluator auth;
-    private final AdminEventBuilder adminEvent;
+    protected RealmModel realm;
+    private AdminPermissionEvaluator auth;
+    private AdminEventBuilder adminEvent;
 
-    protected final KeycloakSession session;
+    @Context
+    protected KeycloakSession session;
 
-    public ClientScopesResource(KeycloakSession session, AdminPermissionEvaluator auth, AdminEventBuilder adminEvent) {
-        this.session = session;
-        this.realm = session.getContext().getRealm();
+    public ClientScopesResource(RealmModel realm, AdminPermissionEvaluator auth, AdminEventBuilder adminEvent) {
+        this.realm = realm;
         this.auth = auth;
         this.adminEvent = adminEvent.resource(ResourceType.CLIENT_SCOPE);
     }
@@ -119,7 +121,9 @@ public class ClientScopesResource {
         if (clientModel == null) {
             throw new NotFoundException("Could not find client scope");
         }
-        return new ClientScopeResource(realm, auth, clientModel, session, adminEvent);
+        ClientScopeResource clientResource = new ClientScopeResource(realm, auth, clientModel, session, adminEvent);
+        ResteasyProviderFactory.getInstance().injectProperties(clientResource);
+        return clientResource;
     }
 
 }

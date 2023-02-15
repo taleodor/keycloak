@@ -102,37 +102,31 @@ public interface RoleResource {
     void deleteComposites(List<RoleRepresentation> rolesToRemove);
 
     /**
-     * Get role members.
-     * <p>
-     * Returns users that have the given role, sorted by username ascending.
-     * </p>
-     * <p>
-     * Note: This method just returns the first 100 users. In order to retrieve all users, use paging (see
-     * {@link #getUserMembers(Integer, Integer)}).
-     * </p>
-     * 
+     * Get role members
+     * <p/>
+     * Returns users that have the given role
+     *
      * @return a list of users with the given role
      */
     @GET
     @Path("users")
     @Produces(MediaType.APPLICATION_JSON)
-    List<UserRepresentation> getUserMembers();
+    Set<UserRepresentation> getRoleUserMembers();
 
     /**
-     * Get role members.
+     * Get role members
      * <p/>
-     * Returns users that have the given role, sorted by username ascending, paginated according to the query
-     * parameters.
+     * Returns users that have the given role, paginated according to the query parameters
      *
      * @param firstResult Pagination offset
-     * @param maxResults Pagination size
+     * @param maxResults  Pagination size
      * @return a list of users with the given role
      */
     @GET
     @Path("users")
     @Produces(MediaType.APPLICATION_JSON)
-    List<UserRepresentation> getUserMembers(@QueryParam("first") Integer firstResult,
-            @QueryParam("max") Integer maxResults);
+    Set<UserRepresentation> getRoleUserMembers(@QueryParam("first") Integer firstResult,
+                                               @QueryParam("max") Integer maxResults);
     
     /**
      * Get role groups
@@ -159,38 +153,5 @@ public interface RoleResource {
     @Path("groups")
     @Produces(MediaType.APPLICATION_JSON)
     Set<GroupRepresentation> getRoleGroupMembers(@QueryParam("first") Integer firstResult,
-                                               @QueryParam("max") Integer maxResults);
-
-    /**
-     * Get role members
-     * <p/>
-     * Returns users that have the given role
-     *
-     * @return a set of users with the given role
-     *
-     * @deprecated please use {@link #getUserMembers()}
-     */
-    @GET
-    @Path("users")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Deprecated
-    Set<UserRepresentation> getRoleUserMembers();
-
-    /**
-     * Get role members
-     * <p/>
-     * Returns users that have the given role, paginated according to the query parameters
-     *
-     * @param firstResult Pagination offset
-     * @param maxResults  Pagination size
-     * @return a set of users with the given role
-     *
-     * @deprecated please use {@link #getUserMembers(Integer, Integer)}
-     */
-    @GET
-    @Path("users")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Deprecated
-    Set<UserRepresentation> getRoleUserMembers(@QueryParam("first") Integer firstResult,
                                                @QueryParam("max") Integer maxResults);
 }

@@ -21,7 +21,6 @@ import org.keycloak.events.Event;
 import org.keycloak.events.admin.AdminEvent;
 import org.keycloak.events.admin.AuthDetails;
 
-import org.keycloak.models.map.common.DeepCloner;
 import java.util.Collections;
 import java.util.Map;
 
@@ -63,7 +62,7 @@ public class EventUtils {
     }
 
     public static MapAdminEventEntity modelToEntity(AdminEvent adminEvent, boolean includeRepresentation) {
-        MapAdminEventEntity mapAdminEvent = DeepCloner.DUMB_CLONER.newInstance(MapAdminEventEntity.class);
+        MapAdminEventEntity mapAdminEvent = new MapAdminEventEntityImpl();
         mapAdminEvent.setId(adminEvent.getId());
         mapAdminEvent.setTimestamp(adminEvent.getTime());
         mapAdminEvent.setRealmId(adminEvent.getRealmId());
@@ -80,7 +79,7 @@ public class EventUtils {
     }
 
     public static MapAuthEventEntity modelToEntity(Event event) {
-        MapAuthEventEntity eventEntity = DeepCloner.DUMB_CLONER.newInstance(MapAuthEventEntity.class);
+        MapAuthEventEntity eventEntity = new MapAuthEventEntityImpl();
         eventEntity.setId(event.getId());
         eventEntity.setTimestamp(event.getTime());
         eventEntity.setType(event.getType());

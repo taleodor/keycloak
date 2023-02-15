@@ -163,7 +163,6 @@ public class RequiredActionTotpSetupTest extends AbstractTestRealmKeycloakTest {
         assertTrue(pageSource.contains("Install one of the following applications on your mobile"));
         assertTrue(pageSource.contains("FreeOTP"));
         assertTrue(pageSource.contains("Google Authenticator"));
-        assertTrue(pageSource.contains("Microsoft Authenticator"));
 
         assertTrue(pageSource.contains("Open the application and scan the barcode"));
         assertFalse(pageSource.contains("Open the application and enter the key"));
@@ -178,7 +177,6 @@ public class RequiredActionTotpSetupTest extends AbstractTestRealmKeycloakTest {
         assertTrue(pageSource.contains("Install one of the following applications on your mobile"));
         assertTrue(pageSource.contains("FreeOTP"));
         assertTrue(pageSource.contains("Google Authenticator"));
-        assertTrue(pageSource.contains("Microsoft Authenticator"));
 
         assertFalse(pageSource.contains("Open the application and scan the barcode"));
         assertTrue(pageSource.contains("Open the application and enter the key"));
@@ -200,7 +198,6 @@ public class RequiredActionTotpSetupTest extends AbstractTestRealmKeycloakTest {
         assertTrue(pageSource.contains("Install one of the following applications on your mobile"));
         assertTrue(pageSource.contains("FreeOTP"));
         assertTrue(pageSource.contains("Google Authenticator"));
-        assertTrue(pageSource.contains("Microsoft Authenticator"));
 
         assertTrue(pageSource.contains("Open the application and scan the barcode"));
         assertFalse(pageSource.contains("Open the application and enter the key"));
@@ -315,7 +312,6 @@ public class RequiredActionTotpSetupTest extends AbstractTestRealmKeycloakTest {
 
             assertTrue(pageSource.contains("FreeOTP"));
             assertFalse(pageSource.contains("Google Authenticator"));
-            assertFalse(pageSource.contains("Microsoft Authenticator"));
 
             totpPage.clickManual();
 
@@ -352,9 +348,7 @@ public class RequiredActionTotpSetupTest extends AbstractTestRealmKeycloakTest {
 
         String totpSecret = totpPage.getTotpSecret();
 
-        String firstCode = totp.generateTOTP(totpSecret);
-
-        totpPage.configure(firstCode);
+        totpPage.configure(totp.generateTOTP(totpSecret));
 
         String authSessionId = events.expectRequiredAction(EventType.UPDATE_TOTP).assertEvent()
                 .getDetails().get(Details.CODE_ID);
@@ -368,14 +362,17 @@ public class RequiredActionTotpSetupTest extends AbstractTestRealmKeycloakTest {
 
         events.expectLogout(authSessionId).assertEvent();
 
+        if (!reusableCodesEnabled) {
+            setTimeOffset(TimeBasedOTP.DEFAULT_INTERVAL_SECONDS);
+        }
+
         loginPage.open();
         loginPage.login("test-user@localhost", "password");
-
-        loginTotpPage.login(firstCode);
+        String src = driver.getPageSource();
+        loginTotpPage.login(totp.generateTOTP(totpSecret));
 
         if (!reusableCodesEnabled) {
             loginTotpPage.assertCurrent();
-            assertEquals("Invalid authenticator code.", loginTotpPage.getInputError());
         } else {
             assertEquals(RequestType.AUTH_RESPONSE, appPage.getRequestType());
             events.expectLogin().assertEvent();

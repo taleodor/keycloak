@@ -1,7 +1,6 @@
 package org.keycloak.config;
 
 import java.io.File;
-import org.keycloak.common.crypto.FipsMode;
 
 public class HttpOptions {
 
@@ -24,13 +23,13 @@ public class HttpOptions {
             .buildTime(true)
             .build();
 
-    public static final Option<Integer> HTTP_PORT = new OptionBuilder<>("http-port", Integer.class)
+    public static final Option HTTP_PORT = new OptionBuilder<>("http-port", Integer.class)
             .category(OptionCategory.HTTP)
             .description("The used HTTP port.")
             .defaultValue(8080)
             .build();
 
-    public static final Option<Integer> HTTPS_PORT = new OptionBuilder<>("https-port", Integer.class)
+    public static final Option HTTPS_PORT = new OptionBuilder<>("https-port", Integer.class)
             .category(OptionCategory.HTTP)
             .description("The used HTTPS port.")
             .defaultValue(8443)
@@ -80,11 +79,10 @@ public class HttpOptions {
             .defaultValue("password")
             .build();
 
-    public static final Option<String> HTTPS_KEY_STORE_TYPE = new OptionBuilder<>("https-key-store-type", String.class)
+    public static final Option HTTPS_KEY_STORE_TYPE = new OptionBuilder<>("https-key-store-type", String.class)
             .category(OptionCategory.HTTP)
             .description("The type of the key store file. " +
-                    "If not given, the type is automatically detected based on the file name. " +
-                    "If '" + SecurityOptions.FIPS_MODE.getKey() + "' is set to '" + FipsMode.strict.name() + "' and no value is set, it defaults to 'BCFKS'.")
+                    "If not given, the type is automatically detected based on the file name.")
             .build();
 
     public static final Option HTTPS_TRUST_STORE_FILE = new OptionBuilder<>("https-trust-store-file", File.class)
@@ -101,12 +99,5 @@ public class HttpOptions {
             .category(OptionCategory.HTTP)
             .description("The type of the trust store file. " +
                     "If not given, the type is automatically detected based on the file name.")
-            .build();
-
-    public static final Option<Boolean> HTTP_SERVER_ENABLED = new OptionBuilder<>("http-server-enabled", Boolean.class)
-            .category(OptionCategory.HTTP)
-            .hidden()
-            .description("Enables or disables the HTTP/s and Socket serving.")
-            .defaultValue(Boolean.TRUE)
             .build();
 }

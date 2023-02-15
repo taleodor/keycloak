@@ -19,7 +19,6 @@ package org.keycloak.userprofile.config;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * Configuration of the User Profile for one realm.
@@ -69,16 +68,6 @@ public class UPConfig {
         groups.add(group);
 
         return this;
-    }
-
-    @JsonIgnore
-    public UPAttribute getAttribute(String name) {
-        for (UPAttribute attribute : getAttributes()) {
-            if (attribute.getName().equals(name)) {
-                return attribute;
-            }
-        }
-        return null;
     }
 
     @Override

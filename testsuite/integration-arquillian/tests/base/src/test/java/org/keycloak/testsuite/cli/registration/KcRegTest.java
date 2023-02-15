@@ -6,10 +6,8 @@ import org.junit.Test;
 import org.keycloak.client.registration.cli.config.ConfigData;
 import org.keycloak.client.registration.cli.config.FileConfigHandler;
 import org.keycloak.client.registration.cli.config.RealmConfigData;
-import org.keycloak.common.util.KeystoreUtil;
 import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.testsuite.cli.KcRegExec;
-import org.keycloak.testsuite.util.KeystoreUtils;
 import org.keycloak.testsuite.util.TempFileResource;
 import org.keycloak.util.JsonSerialization;
 
@@ -477,7 +475,7 @@ public class KcRegTest extends AbstractRegCliTest {
 
         assertExitCodeAndStreamSizes(exe, 1, 0, 2);
         Assert.assertEquals("login message", "Logging into " + serverUrl + " as user user1 of realm test", exe.stderrLines().get(0));
-        Assert.assertEquals("error message", "Client not allowed for direct access grants [unauthorized_client]", exe.stderrLines().get(exe.stderrLines().size() - 1));
+        Assert.assertEquals("error message", "Client not allowed for direct access grants [unauthorized_client]", exe.stderrLines().get(1));
 
 
         // try wrong user password
@@ -486,7 +484,7 @@ public class KcRegTest extends AbstractRegCliTest {
 
         assertExitCodeAndStreamSizes(exe, 1, 0, 2);
         Assert.assertEquals("login message", "Logging into " + serverUrl + " as user user1 of realm test", exe.stderrLines().get(0));
-        Assert.assertEquals("error message", "Invalid user credentials [invalid_grant]", exe.stderrLines().get(exe.stderrLines().size() - 1));
+        Assert.assertEquals("error message", "Invalid user credentials [invalid_grant]", exe.stderrLines().get(1));
 
 
         // try wrong client secret
@@ -495,7 +493,7 @@ public class KcRegTest extends AbstractRegCliTest {
 
         assertExitCodeAndStreamSizes(exe, 1, 0, 2);
         Assert.assertEquals("login message", "Logging into " + serverUrl + " as user user1 of realm test", exe.stderrLines().get(0));
-        Assert.assertEquals("error message", "Invalid client or Invalid client credentials [unauthorized_client]", exe.stderrLines().get(exe.stderrLines().size() - 1));
+        Assert.assertEquals("error message", "Invalid client or Invalid client credentials [unauthorized_client]", exe.stderrLines().get(1));
 
 
         // try whole CRUD
@@ -504,24 +502,13 @@ public class KcRegTest extends AbstractRegCliTest {
     }
 
     @Test
-    public void testCRUDWithOnTheFlyUserAuthWithSignedJwtClient_JKSKeystore() throws IOException {
-        KeystoreUtils.assumeKeystoreTypeSupported(KeystoreUtil.KeystoreFormat.JKS);
-        testCRUDWithOnTheFlyUserAuthWithSignedJwtClient(KeystoreUtil.KeystoreFormat.JKS.getFileExtension());
-    }
-
-    @Test
-    public void testCRUDWithOnTheFlyUserAuthWithSignedJwtClient_PKCS12Keystore() throws IOException {
-        KeystoreUtils.assumeKeystoreTypeSupported(KeystoreUtil.KeystoreFormat.PKCS12);
-        testCRUDWithOnTheFlyUserAuthWithSignedJwtClient(KeystoreUtil.KeystoreFormat.PKCS12.getFileExtension());
-    }
-
-    private void testCRUDWithOnTheFlyUserAuthWithSignedJwtClient(String keystoreFileExtension) throws IOException {
+    public void testCRUDWithOnTheFlyUserAuthWithSignedJwtClient() throws IOException {
         /*
          *  Test create, get, update, and delete using on-the-fly authentication - without using any config file.
          *  Login is performed by each operation again, and again using username, password, and client JWT signature.
          */
-        File keystore = new File(System.getProperty("user.dir") + "/src/test/resources/cli/kcreg/reg-cli-keystore." + keystoreFileExtension);
-        Assert.assertTrue("reg-cli-keystore." + keystoreFileExtension + " exists", keystore.isFile());
+        File keystore = new File(System.getProperty("user.dir") + "/src/test/resources/cli/kcreg/reg-cli-keystore.jks");
+        Assert.assertTrue("reg-cli-keystore.jks exists", keystore.isFile());
 
         // try client without direct grants enabled
         KcRegExec exe = execute("get test-client --no-config --server " + serverUrl + " --realm test" +
@@ -530,7 +517,7 @@ public class KcRegTest extends AbstractRegCliTest {
 
         assertExitCodeAndStreamSizes(exe, 1, 0, 2);
         Assert.assertEquals("login message", "Logging into " + serverUrl + " as user user1 of realm test", exe.stderrLines().get(0));
-        Assert.assertEquals("error message", "Client not allowed for direct access grants [unauthorized_client]", exe.stderrLines().get(exe.stderrLines().size() - 1));
+        Assert.assertEquals("error message", "Client not allowed for direct access grants [unauthorized_client]", exe.stderrLines().get(1));
 
 
         // try wrong user password
@@ -540,7 +527,7 @@ public class KcRegTest extends AbstractRegCliTest {
 
         assertExitCodeAndStreamSizes(exe, 1, 0, 2);
         Assert.assertEquals("login message", "Logging into " + serverUrl + " as user user1 of realm test", exe.stderrLines().get(0));
-        Assert.assertEquals("error message", "Invalid user credentials [invalid_grant]", exe.stderrLines().get(exe.stderrLines().size() - 1));
+        Assert.assertEquals("error message", "Invalid user credentials [invalid_grant]", exe.stderrLines().get(1));
 
 
         // try wrong storepass
@@ -550,7 +537,7 @@ public class KcRegTest extends AbstractRegCliTest {
 
         assertExitCodeAndStreamSizes(exe, 1, 0, 2);
         Assert.assertEquals("login message", "Logging into " + serverUrl + " as user user1 of realm test", exe.stderrLines().get(0));
-        Assert.assertTrue("error message", exe.stderrLines().get(exe.stderrLines().size() - 1).startsWith("Failed to load private key: "));
+        Assert.assertEquals("error message", "Failed to load private key: Keystore was tampered with, or password was incorrect", exe.stderrLines().get(1));
 
 
         // try whole CRUD
@@ -577,8 +564,8 @@ public class KcRegTest extends AbstractRegCliTest {
          *  Test create, get, update, and delete using on-the-fly authentication - without using any config file.
          *  Login is performed by each operation again, and again using only client JWT signature - service account is used.
          */
-        File keystore = new File(System.getProperty("user.dir") + "/src/test/resources/cli/kcreg/reg-cli-keystore.p12");
-        Assert.assertTrue("reg-cli-keystore.p12 exists", keystore.isFile());
+        File keystore = new File(System.getProperty("user.dir") + "/src/test/resources/cli/kcreg/reg-cli-keystore.jks");
+        Assert.assertTrue("reg-cli-keystore.jks exists", keystore.isFile());
 
         testCRUDWithOnTheFlyAuth(serverUrl,
                 "--client reg-cli-jwt --keystore '" + keystore.getAbsolutePath() + "' --storepass storepass --keypass keypass --alias reg-cli", "",

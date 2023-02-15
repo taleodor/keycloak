@@ -17,8 +17,6 @@
 
 package org.keycloak.models.map.storage.hotRod.authorization;
 
-import org.infinispan.api.annotations.indexing.Basic;
-import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.protostream.GeneratedSchema;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoDoc;
@@ -39,7 +37,7 @@ import org.keycloak.models.map.storage.hotRod.common.UpdatableHotRodEntityDelega
         cacheName = "authz"
 )
 @ProtoDoc("schema-version: " + HotRodResourceServerEntity.VERSION)
-@Indexed
+@ProtoDoc("@Indexed")
 public class HotRodResourceServerEntity extends AbstractHotRodEntity {
 
     @IgnoreForEntityImplementationGenerator
@@ -56,19 +54,19 @@ public class HotRodResourceServerEntity extends AbstractHotRodEntity {
     }
 
 
-    @Basic(projectable = true)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     @ProtoField(number = 1)
     public Integer entityVersion = VERSION;
 
-    @Basic(projectable = true, sortable = true)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     @ProtoField(number = 2)
     public String id;
 
-    @Basic(sortable = true)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     @ProtoField(number = 3)
     public String realmId;
 
-    @Basic(sortable = true)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     @ProtoField(number = 4)
     public String clientId;
 

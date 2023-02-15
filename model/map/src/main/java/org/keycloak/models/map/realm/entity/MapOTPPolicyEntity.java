@@ -27,7 +27,7 @@ import org.keycloak.models.map.common.UpdatableEntity;
 public interface MapOTPPolicyEntity extends UpdatableEntity {
     static MapOTPPolicyEntity fromModel(OTPPolicy model) {
         if (model == null) return null;
-        MapOTPPolicyEntity entity = DeepCloner.DUMB_CLONER.newInstance(MapOTPPolicyEntity.class);
+        MapOTPPolicyEntity entity = new MapOTPPolicyEntityImpl();
         entity.setOtpPolicyAlgorithm(model.getAlgorithm());
         entity.setOtpPolicyDigits(model.getDigits());
         entity.setOtpPolicyInitialCounter(model.getInitialCounter());

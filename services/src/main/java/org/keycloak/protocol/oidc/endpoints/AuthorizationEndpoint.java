@@ -18,9 +18,9 @@
 package org.keycloak.protocol.oidc.endpoints;
 
 import org.jboss.logging.Logger;
+import org.jboss.resteasy.spi.ResteasyProviderFactory;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.authentication.AuthenticationProcessor;
-import org.keycloak.common.util.ResponseSessionTask;
 import org.keycloak.constants.AdapterConstants;
 import org.keycloak.events.Details;
 import org.keycloak.events.Errors;
@@ -30,8 +30,7 @@ import org.keycloak.locale.LocaleSelectorProvider;
 import org.keycloak.models.AuthenticationFlowModel;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.Constants;
-import org.keycloak.models.KeycloakSession;
-import org.keycloak.models.utils.KeycloakModelUtils;
+import org.keycloak.models.RealmModel;
 import org.keycloak.protocol.AuthorizationEndpointBase;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.protocol.oidc.endpoints.request.AuthorizationEndpointRequest;
@@ -45,7 +44,6 @@ import org.keycloak.services.ErrorPageException;
 import org.keycloak.services.Urls;
 import org.keycloak.services.clientpolicy.ClientPolicyException;
 import org.keycloak.services.clientpolicy.context.AuthorizationRequestContext;
-import org.keycloak.services.clientpolicy.context.PreAuthorizationRequestContext;
 import org.keycloak.services.messages.Messages;
 import org.keycloak.services.resources.LoginActionsService;
 import org.keycloak.services.util.CacheControlUtil;
@@ -60,6 +58,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.List;
 import java.util.Map;
 
@@ -94,27 +94,22 @@ public class AuthorizationEndpoint extends AuthorizationEndpointBase {
     private AuthorizationEndpointRequest request;
     private String redirectUri;
 
-    public AuthorizationEndpoint(KeycloakSession session, EventBuilder event) {
-        super(session, event);
+    public AuthorizationEndpoint(RealmModel realm, EventBuilder event) {
+        super(realm, event);
         event.event(EventType.LOGIN);
-    }
-
-    private AuthorizationEndpoint(final KeycloakSession session, final EventBuilder event, final Action action) {
-        this(session, event);
-        this.action = action;
     }
 
     @POST
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     public Response buildPost() {
         logger.trace("Processing @POST request");
-        return processInRetriableTransaction(httpRequest.getDecodedFormParameters());
+        return process(httpRequest.getDecodedFormParameters());
     }
 
     @GET
     public Response buildGet() {
         logger.trace("Processing @GET request");
-        return processInRetriableTransaction(session.getContext().getUri().getQueryParameters());
+        return process(session.getContext().getUri().getQueryParameters());
     }
 
     /**
@@ -122,22 +117,9 @@ public class AuthorizationEndpoint extends AuthorizationEndpointBase {
      */
     @Path("device")
     public Object authorizeDevice() {
-        return new DeviceEndpoint(session, event);
-    }
-
-    /**
-     * Process the request in a retriable transaction.
-     */
-    private Response processInRetriableTransaction(final MultivaluedMap<String, String> formParameters) {
-        return KeycloakModelUtils.runJobInRetriableTransaction(session.getKeycloakSessionFactory(), new ResponseSessionTask(session) {
-            @Override
-            public Response runInternal(KeycloakSession session) {
-                // create another instance of the endpoint to isolate each run.
-                AuthorizationEndpoint other = new AuthorizationEndpoint(session,
-                        new EventBuilder(session.getContext().getRealm(), session, clientConnection), action);
-                // process the request in the created instance.
-                return other.process(formParameters);            }
-        }, 10, 100);
+        DeviceEndpoint endpoint = new DeviceEndpoint(realm, event);
+        ResteasyProviderFactory.getInstance().injectProperties(endpoint);
+        return endpoint;
     }
 
     private Response process(MultivaluedMap<String, String> params) {
@@ -145,12 +127,6 @@ public class AuthorizationEndpoint extends AuthorizationEndpointBase {
 
         checkSsl();
         checkRealm();
-
-        try {
-            session.clientPolicy().triggerOnEvent(new PreAuthorizationRequestContext(clientId, params));
-        } catch (ClientPolicyException cpe) {
-            throw new ErrorPageException(session, authenticationSession, cpe.getErrorStatus(), cpe.getErrorDetail());
-        }
         checkClient(clientId);
 
         request = AuthorizationEndpointRequestParserProcessor.parseRequest(event, session, client, params, AuthorizationEndpointRequestParserProcessor.EndpointType.OIDC_AUTH_ENDPOINT);
@@ -208,7 +184,7 @@ public class AuthorizationEndpoint extends AuthorizationEndpointBase {
         updateAuthenticationSession();
 
         // So back button doesn't work
-        CacheControlUtil.noBackButtonCacheControlHeader(session);
+        CacheControlUtil.noBackButtonCacheControlHeader();
         switch (action) {
             case REGISTER:
                 return buildRegister();
@@ -363,7 +339,7 @@ public class AuthorizationEndpoint extends AuthorizationEndpointBase {
     }
 
     private Response buildRegister() {
-        authManager.expireIdentityCookie(realm, session.getContext().getUri(), session);
+        authManager.expireIdentityCookie(realm, session.getContext().getUri(), clientConnection);
 
         AuthenticationFlowModel flow = realm.getRegistrationFlow();
         String flowId = flow.getId();
@@ -375,7 +351,7 @@ public class AuthorizationEndpoint extends AuthorizationEndpointBase {
     }
 
     private Response buildForgotCredential() {
-        authManager.expireIdentityCookie(realm, session.getContext().getUri(), session);
+        authManager.expireIdentityCookie(realm, session.getContext().getUri(), clientConnection);
 
         AuthenticationFlowModel flow = realm.getResetCredentialsFlow();
         String flowId = flow.getId();

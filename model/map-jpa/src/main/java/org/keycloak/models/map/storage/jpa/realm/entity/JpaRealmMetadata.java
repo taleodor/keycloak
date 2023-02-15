@@ -29,7 +29,7 @@ import org.keycloak.models.map.realm.MapRealmEntityImpl;
 public class JpaRealmMetadata extends MapRealmEntityImpl implements Serializable {
 
     public JpaRealmMetadata() {
-        super(DeepCloner.DUMB_CLONER);
+        super();
     }
 
     public JpaRealmMetadata(final DeepCloner cloner) {

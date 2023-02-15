@@ -259,7 +259,6 @@ public class DefaultInfinispanConnectionProviderFactory implements InfinispanCon
                     .l1()
                         .enabled(l1Enabled)
                         .lifespan(l1Lifespan)
-                    .stateTransfer().timeout(30, TimeUnit.SECONDS)
                     .build();
         }
 
@@ -394,7 +393,7 @@ public class DefaultInfinispanConnectionProviderFactory implements InfinispanCon
 
     // Used for cross-data centers scenario. Usually integration with external JDG server, which itself handles communication between DCs.
     private void configureRemoteCacheStore(ConfigurationBuilder builder, boolean async, String cacheName) {
-        String jdgServer = config.get("remoteStoreHost", "127.0.0.1");
+        String jdgServer = config.get("remoteStoreHost", "localhost");
         Integer jdgPort = config.getInt("remoteStorePort", 11222);
 
         // After upgrade to Infinispan 12.1.7.Final it's required that both remote store and embedded cache use
@@ -423,7 +422,7 @@ public class DefaultInfinispanConnectionProviderFactory implements InfinispanCon
     }
 
     private void configureRemoteActionTokenCacheStore(ConfigurationBuilder builder, boolean async) {
-        String jdgServer = config.get("remoteStoreHost", "127.0.0.1");
+        String jdgServer = config.get("remoteStoreHost", "localhost");
         Integer jdgPort = config.getInt("remoteStorePort", 11222);
 
         // After upgrade to Infinispan 12.1.7.Final it's required that both remote store and embedded cache use

@@ -18,7 +18,7 @@
 package org.keycloak.protocol;
 
 import org.jboss.logging.Logger;
-import org.keycloak.http.HttpRequest;
+import org.jboss.resteasy.spi.HttpRequest;
 import org.keycloak.authentication.AuthenticationProcessor;
 import org.keycloak.common.ClientConnection;
 import org.keycloak.events.Details;
@@ -42,6 +42,7 @@ import org.keycloak.services.resources.LoginActionsService;
 import org.keycloak.sessions.AuthenticationSessionModel;
 import org.keycloak.sessions.RootAuthenticationSessionModel;
 
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 
@@ -56,25 +57,22 @@ public abstract class AuthorizationEndpointBase {
 
     public static final String APP_INITIATED_FLOW = "APP_INITIATED_FLOW";
 
-    protected final RealmModel realm;
-    protected final EventBuilder event;
+    protected RealmModel realm;
+    protected EventBuilder event;
     protected AuthenticationManager authManager;
 
-    protected final HttpHeaders headers;
+    @Context
+    protected HttpHeaders headers;
+    @Context
+    protected HttpRequest httpRequest;
+    @Context
+    protected KeycloakSession session;
+    @Context
+    protected ClientConnection clientConnection;
 
-    protected final HttpRequest httpRequest;
-
-    protected final KeycloakSession session;
-
-    protected final ClientConnection clientConnection;
-
-    public AuthorizationEndpointBase(KeycloakSession session, EventBuilder event) {
-        this.session = session;
-        this.clientConnection = session.getContext().getConnection();
-        this.realm = session.getContext().getRealm();
+    public AuthorizationEndpointBase(RealmModel realm, EventBuilder event) {
+        this.realm = realm;
         this.event = event;
-        this.httpRequest = session.getContext().getHttpRequest();
-        this.headers = session.getContext().getRequestHeaders();
     }
 
     protected AuthenticationProcessor createProcessor(AuthenticationSessionModel authSession, String flowId, String flowPath) {

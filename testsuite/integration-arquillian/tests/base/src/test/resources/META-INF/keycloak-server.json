@@ -51,8 +51,8 @@
         }
     },
 
-    "globalLock": {
-        "provider": "${keycloak.globalLock.provider:dblock}"
+    "dblock": {
+        "provider": "${keycloak.dblock.provider:jpa}"
     },
 
     "realm": {
@@ -302,7 +302,6 @@
             "file": "${keycloak.truststore.file:target/dependency/keystore/keycloak.truststore}",
             "password": "${keycloak.truststore.password:secret}",
             "hostname-verification-policy": "${keycloak.truststore.policy:WILDCARD}",
-            "type": "${keycloak.truststore.type:}",
             "disabled": "${keycloak.truststore.disabled:false}"
         }
     },

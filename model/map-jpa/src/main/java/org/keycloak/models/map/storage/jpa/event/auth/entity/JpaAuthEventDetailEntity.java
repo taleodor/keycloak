@@ -20,7 +20,7 @@ import javax.persistence.Entity;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
-import org.keycloak.models.map.storage.jpa.JpaAttributeEntityWithHashValue;
+import org.keycloak.models.map.storage.jpa.JpaAttributeEntity;
 
 /**
  * JPA implementation for auth event details.
@@ -29,9 +29,9 @@ import org.keycloak.models.map.storage.jpa.JpaAttributeEntityWithHashValue;
  */
 @Entity
 @Table(name = "kc_auth_event_detail", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"fk_root", "name", "value_hash"})
+        @UniqueConstraint(columnNames = {"fk_root", "name", "value"})
 })
-public class JpaAuthEventDetailEntity extends JpaAttributeEntityWithHashValue<JpaAuthEventEntity> {
+public class JpaAuthEventDetailEntity extends JpaAttributeEntity<JpaAuthEventEntity> {
 
     public JpaAuthEventDetailEntity() {
     }

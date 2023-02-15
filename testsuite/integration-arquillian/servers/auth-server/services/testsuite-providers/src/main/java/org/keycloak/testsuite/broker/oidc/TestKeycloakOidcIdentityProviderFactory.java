@@ -65,14 +65,4 @@ public class TestKeycloakOidcIdentityProviderFactory extends KeycloakOIDCIdentit
             }
         };
     }
-
-    @Override
-    public OIDCIdentityProviderConfig createConfig() {
-        return new OIDCIdentityProviderConfig(super.createConfig()) {
-            @Override
-            public String getDisplayIconClasses() {
-                return "my-custom-idp-icon";
-            }
-        };
-    }
 }

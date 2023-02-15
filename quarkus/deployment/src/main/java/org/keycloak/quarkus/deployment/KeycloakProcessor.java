@@ -94,8 +94,6 @@ import org.jboss.resteasy.plugins.server.servlet.ResteasyContextParameters;
 import org.jboss.resteasy.spi.ResteasyDeployment;
 import org.keycloak.Config;
 import org.keycloak.common.crypto.FipsMode;
-import org.keycloak.common.profile.PropertiesFileProfileConfigResolver;
-import org.keycloak.common.profile.PropertiesProfileConfigResolver;
 import org.keycloak.config.SecurityOptions;
 import org.keycloak.config.StorageOptions;
 import org.keycloak.config.TransactionOptions;
@@ -103,7 +101,7 @@ import org.keycloak.connections.jpa.JpaConnectionProvider;
 import org.keycloak.connections.jpa.JpaConnectionSpi;
 import org.keycloak.models.map.storage.jpa.JpaMapStorageProviderFactory;
 import org.keycloak.protocol.saml.mappers.DeployedScriptSAMLProtocolMapper;
-import org.keycloak.quarkus.runtime.QuarkusProfileConfigResolver;
+import org.keycloak.quarkus.runtime.QuarkusProfile;
 import org.keycloak.quarkus.runtime.configuration.PersistedConfigSource;
 import org.keycloak.quarkus.runtime.configuration.QuarkusPropertiesConfigSource;
 import org.keycloak.quarkus.runtime.configuration.mappers.PropertyMapper;
@@ -209,26 +207,6 @@ class KeycloakProcessor {
         return new FeatureBuildItem("keycloak");
     }
 
-    @Record(ExecutionTime.STATIC_INIT)
-    @BuildStep
-    ConfigBuildItem initConfig(KeycloakRecorder recorder) {
-        Config.init(new MicroProfileConfigProvider());
-        recorder.initConfig();
-        return new ConfigBuildItem();
-    }
-
-    @Record(ExecutionTime.STATIC_INIT)
-    @BuildStep
-    @Consume(ConfigBuildItem.class)
-    ProfileBuildItem configureProfile(KeycloakRecorder recorder) {
-        Profile profile = Profile.configure(
-                new QuarkusProfileConfigResolver(),
-                new PropertiesFileProfileConfigResolver()); // Need profile.properties for now as testsuite relies on it
-        recorder.configureProfile(profile.getName(), profile.getFeatures());
-
-        return new ProfileBuildItem();
-    }
-
     /**
      * <p>Configures the persistence unit for Quarkus.
      *
@@ -258,7 +236,7 @@ class KeycloakProcessor {
 
             if ("keycloak-default".equals(descriptor.getName())) {
                 defaultUnitDescriptor = descriptor;
-                configureDefaultPersistenceUnitProperties(defaultUnitDescriptor, config, getDefaultDataSource(jdbcDataSources));
+                configureDefaultPersistenceUnitProperties(defaultUnitDescriptor, config, jdbcDataSources);
                 runtimeConfigured.produce(new HibernateOrmIntegrationRuntimeConfiguredBuildItem("keycloak", defaultUnitDescriptor.getName())
                         .setInitListener(recorder.createDefaultUnitListener()));
             } else {
@@ -295,11 +273,7 @@ class KeycloakProcessor {
     }
 
     private void configureDefaultPersistenceUnitProperties(ParsedPersistenceXmlDescriptor descriptor, HibernateOrmConfig config,
-            JdbcDataSourceBuildItem defaultDataSource) {
-        if (defaultDataSource == null || !defaultDataSource.isDefault()) {
-            throw new RuntimeException("The server datasource must be the default datasource.");
-        }
-
+            List<JdbcDataSourceBuildItem> jdbcDataSources) {
         Properties unitProperties = descriptor.getProperties();
 
         unitProperties.setProperty(AvailableSettings.DIALECT, config.defaultPersistenceUnit.dialect.dialect.orElse(null));
@@ -324,7 +298,7 @@ class KeycloakProcessor {
 
         unitProperties.setProperty(AvailableSettings.QUERY_STARTUP_CHECKING, Boolean.FALSE.toString());
 
-        String dbKind = defaultDataSource.getDbKind();
+        String dbKind = jdbcDataSources.get(0).getDbKind();
 
         for (Entry<Object, Object> query : loadSpecificNamedQueries(dbKind.toLowerCase()).entrySet()) {
             unitProperties.setProperty(QUERY_PROPERTY_PREFIX + query.getKey(), query.getValue().toString());
@@ -357,8 +331,8 @@ class KeycloakProcessor {
      */
     @Record(ExecutionTime.STATIC_INIT)
     @BuildStep
-    @Consume(ProfileBuildItem.class)
     KeycloakSessionFactoryPreInitBuildItem configureKeycloakSessionFactory(KeycloakRecorder recorder, List<PersistenceXmlDescriptorBuildItem> descriptors) {
+        Profile.setInstance(new QuarkusProfile());
         Map<Spi, Map<Class<? extends Provider>, Map<String, Class<? extends ProviderFactory>>>> factories = new HashMap<>();
         Map<Class<? extends Provider>, String> defaultProviders = new HashMap<>();
         Map<String, ProviderFactory> preConfiguredProviders = new HashMap<>();
@@ -829,15 +803,5 @@ class KeycloakProcessor {
 
     private boolean isHealthEnabled() {
         return Configuration.getOptionalBooleanValue(MicroProfileConfigProvider.NS_KEYCLOAK_PREFIX.concat("health-enabled")).orElse(false);
-    }
-
-    static JdbcDataSourceBuildItem getDefaultDataSource(List<JdbcDataSourceBuildItem> jdbcDataSources) {
-        for (JdbcDataSourceBuildItem jdbcDataSource : jdbcDataSources) {
-            if (jdbcDataSource.isDefault()) {
-                return jdbcDataSource;
-            }
-        }
-
-        throw new RuntimeException("No default datasource found. The server datasource must be the default datasource.");
     }
 }

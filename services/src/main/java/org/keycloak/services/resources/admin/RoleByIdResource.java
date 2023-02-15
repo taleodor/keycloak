@@ -43,6 +43,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
@@ -58,15 +59,16 @@ import java.util.stream.Stream;
 public class RoleByIdResource extends RoleResource {
     protected static final Logger logger = Logger.getLogger(RoleByIdResource.class);
     private final RealmModel realm;
-    private final AdminPermissionEvaluator auth;
-    private final AdminEventBuilder adminEvent;
+    private AdminPermissionEvaluator auth;
+    private AdminEventBuilder adminEvent;
 
-    private final KeycloakSession session;
+    @Context
+    private KeycloakSession session;
 
-    public RoleByIdResource(KeycloakSession session, AdminPermissionEvaluator auth, AdminEventBuilder adminEvent) {
-        super(session.getContext().getRealm());
-        this.session = session;
-        this.realm = session.getContext().getRealm();
+    public RoleByIdResource(RealmModel realm, AdminPermissionEvaluator auth, AdminEventBuilder adminEvent) {
+        super(realm);
+
+        this.realm = realm;
         this.auth = auth;
         this.adminEvent = adminEvent;
     }

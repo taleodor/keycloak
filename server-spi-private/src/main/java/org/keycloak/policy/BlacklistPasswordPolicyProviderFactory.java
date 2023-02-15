@@ -39,33 +39,28 @@ import java.util.function.Supplier;
 /**
  * Creates {@link BlacklistPasswordPolicyProvider} instances.
  * <p>
- * Password blacklists are simple text files where every line is a blacklisted password delimited by a newline character {@code \n}.
+ * Password blacklists are simple text files where every line is a blacklisted password delimited by {@code \n}.
+ * Blacklist files are discovered and registered at startup.
  * <p>Blacklists can be configured via the <em>Authentication: Password Policy</em> section in the admin-console.
  * A blacklist-file is referred to by its name in the policy configuration.
- *
- * <h1>Blacklist location</h1>
  * <p>Users can provide custom blacklists by adding a blacklist password file to the configured blacklist folder.
  * <p>
  * <p>The location of the password-blacklists folder is derived as follows</p>
  * <ol>
  * <li>the value of the System property {@code keycloak.password.blacklists.path} if configured - fails if folder is missing</li>
  * <li>the value of the SPI config property: {@code blacklistsPath} when explicitly configured - fails if folder is missing</li>
- * <li>otherwise {@code $KC_HOME/data/password-blacklists/} if nothing else is configured</li>
+ * <li>otherwise {@code ${jboss.server.data.dir}/password-blacklists/} if nothing else is configured - the folder is created automatically if not present</li>
  * </ol>
- *
- * To configure the blacklist folder via CLI use {@code --spi-password-policy-password-blacklist-blacklists-path=/path/to/blacklistsFolder}
- *
- * <p>Note that the preferred way for configuration is to copy the password file to the {@code $KC_HOME/data/password-blacklists/} folder</p>
- * <p>A password blacklist with the filename {@code 10_million_passwords.txt}
- * that is located beneath {@code $KC_HOME/data/keycloak/blacklists/} can be referred to as {@code 10_million_passwords.txt} in the <em>Authentication: Password Policy</em> configuration.
- *
- * <h1>False positives</h1>
- * <p>
- * The current implementation uses a probabilistic data-structure called {@link BloomFilter} which allows for fast and memory efficient containment checks, e.g. whether a given password is contained in a blacklist,
- * with the possibility for false positives. By default a false positive probability {@link #DEFAULT_FALSE_POSITIVE_PROBABILITY} is used.
- *
- * To change the false positive probability via CLI configuration use {@code --spi-password-policy-password-blacklist-false-positive-probability=0.00001}
- * </p>
+ * <p>Note that the preferred way for configuration is to copy the password file to the {@code ${jboss.server.data.dir}/password-blacklists/} folder</p>
+ * <p>To configure a password blacklist via the SPI configuration, run the following jboss-cli script:</p>
+ * <pre>{@code
+ * /subsystem=keycloak-server/spi=password-policy:add()
+ * /subsystem=keycloak-server/spi=password-policy/provider=passwordBlacklist:add(enabled=true)
+ * /subsystem=keycloak-server/spi=password-policy/provider=passwordBlacklist:write-attribute(name=properties.blacklistsPath, value=/data/keycloak/blacklists/)
+ * }</pre>
+ * <p>A password blacklist with the filename {@code 10_million_password_list_top_1000000-password-blacklist.txt}
+ * that is located beneath {@code /data/keycloak/blacklists/} can be referred to
+ * as {@code 10_million_password_list_top_1000000-password-blacklist.txt} in the <em>Authentication: Password Policy</em> configuration.
  *
  * @author <a href="mailto:thomas.darimont@gmail.com">Thomas Darimont</a>
  */
@@ -79,15 +74,11 @@ public class BlacklistPasswordPolicyProviderFactory implements PasswordPolicyPro
 
     public static final String BLACKLISTS_PATH_PROPERTY = "blacklistsPath";
 
-    public static final String BLACKLISTS_FALSE_POSITIVE_PROBABILITY_PROPERTY = "falsePositiveProbability";
-
-    public static final double DEFAULT_FALSE_POSITIVE_PROBABILITY = 0.0001;
-
     public static final String JBOSS_SERVER_DATA_DIR = "jboss.server.data.dir";
 
     public static final String PASSWORD_BLACKLISTS_FOLDER = "password-blacklists" + File.separator;
 
-    private final ConcurrentMap<String, FileBasedPasswordBlacklist> blacklistRegistry = new ConcurrentHashMap<>();
+    private ConcurrentMap<String, FileBasedPasswordBlacklist> blacklistRegistry = new ConcurrentHashMap<>();
 
     private volatile Path blacklistsBasePath;
 
@@ -145,7 +136,7 @@ public class BlacklistPasswordPolicyProviderFactory implements PasswordPolicyPro
 
     /**
      * Method to obtain the default location for the list folder. The method
-     * will return the <em>data</em> directory of the Keycloak instance concatenated
+     * will return the <em>data</em> directory of the installation concatenated
      * with <em>/password-blacklists/</em>.
      *
      * @return The default path used by the provider to lookup the lists
@@ -165,36 +156,16 @@ public class BlacklistPasswordPolicyProviderFactory implements PasswordPolicyPro
 
         Objects.requireNonNull(blacklistName, "blacklistName");
 
-        String listName = blacklistName.trim();
-        if (listName.isEmpty()) {
+        String cleanedBlacklistName = blacklistName.trim();
+        if (cleanedBlacklistName.isEmpty()) {
             throw new IllegalArgumentException("Password blacklist name must not be empty!");
         }
 
-        return blacklistRegistry.computeIfAbsent(listName, (name) -> {
-            double fpp = getFalsePositiveProbability();
-            FileBasedPasswordBlacklist pbl = new FileBasedPasswordBlacklist(this.blacklistsBasePath, name, fpp);
+        return blacklistRegistry.computeIfAbsent(cleanedBlacklistName, (name) -> {
+            FileBasedPasswordBlacklist pbl = new FileBasedPasswordBlacklist(this.blacklistsBasePath, name);
             pbl.lazyInit();
             return pbl;
         });
-    }
-
-    protected double getFalsePositiveProbability() {
-
-        if (config == null) {
-            return DEFAULT_FALSE_POSITIVE_PROBABILITY;
-        }
-
-        String falsePositiveProbString = config.get(BLACKLISTS_FALSE_POSITIVE_PROBABILITY_PROPERTY);
-        if (falsePositiveProbString == null) {
-            return DEFAULT_FALSE_POSITIVE_PROBABILITY;
-        }
-
-        try {
-            return Double.parseDouble(falsePositiveProbString);
-        } catch (NumberFormatException nfe) {
-            LOG.warnf("Could not parse false positive probability from string %s", falsePositiveProbString);
-            return DEFAULT_FALSE_POSITIVE_PROBABILITY;
-        }
     }
 
     /**
@@ -223,11 +194,13 @@ public class BlacklistPasswordPolicyProviderFactory implements PasswordPolicyPro
      * to construct a {@link PasswordBlacklist}.
      * <p>
      * This implementation uses a dynamically sized {@link BloomFilter}
-     * with a provided default false positive probability.
+     * to provide a false positive probability of 1%.
      *
      * @see BloomFilter
      */
     public static class FileBasedPasswordBlacklist implements PasswordBlacklist {
+
+        private static final double FALSE_POSITIVE_PROBABILITY = 0.01;
 
         private static final int BUFFER_SIZE_IN_BYTES = 512 * 1024;
 
@@ -241,33 +214,21 @@ public class BlacklistPasswordPolicyProviderFactory implements PasswordPolicyPro
          */
         private final Path path;
 
-        private final double falsePositiveProbability;
-
         /**
          * Initialized lazily via {@link #lazyInit()}
          */
         private BloomFilter<String> blacklist;
 
-        /**
-         * Creates a new {@link FileBasedPasswordBlacklist} with {@link #DEFAULT_FALSE_POSITIVE_PROBABILITY}.
-         *
-         * @param blacklistBasePath folder containing the blacklists
-         * @param name name of blacklist file
-         */
         public FileBasedPasswordBlacklist(Path blacklistBasePath, String name) {
-            this(blacklistBasePath, name, DEFAULT_FALSE_POSITIVE_PROBABILITY);
-        }
 
-        public FileBasedPasswordBlacklist(Path blacklistBasePath, String name, double falsePositiveProbability) {
+            this.name = name;
+            this.path = blacklistBasePath.resolve(name);
+
 
             if (name.contains("/")) {
                 // disallow '/' to avoid accidental filesystem traversal
                 throw new IllegalArgumentException("" + name + " must not contain slashes!");
             }
-
-            this.name = name;
-            this.path = blacklistBasePath.resolve(name);
-            this.falsePositiveProbability = falsePositiveProbability;
 
             if (!Files.exists(this.path)) {
                 throw new IllegalArgumentException("Password blacklist " + name + " not found!");
@@ -276,10 +237,6 @@ public class BlacklistPasswordPolicyProviderFactory implements PasswordPolicyPro
 
         public String getName() {
             return name;
-        }
-
-        public double getFalsePositiveProbability() {
-            return falsePositiveProbability;
         }
 
         public boolean contains(String password) {
@@ -303,46 +260,39 @@ public class BlacklistPasswordPolicyProviderFactory implements PasswordPolicyPro
         private BloomFilter<String> load() {
 
             try {
-                LOG.infof("Loading blacklist start: name=%s path=%s", name, path);
+                LOG.infof("Loading blacklist with name %s from %s - start", name, path);
 
-                long passwordCount = countPasswordsInBlacklistFile();
-                double fpp = getFalsePositiveProbability();
+                long passwordCount = getPasswordCount();
 
                 BloomFilter<String> filter = BloomFilter.create(
                         Funnels.stringFunnel(StandardCharsets.UTF_8),
                         passwordCount,
-                        fpp);
+                        FALSE_POSITIVE_PROBABILITY);
 
-                insertPasswordsInto(filter);
+                try (BufferedReader br = newReader(path)) {
+                    br.lines().forEach(filter::put);
+                }
 
-                double expectedFfp = filter.expectedFpp();
-                LOG.infof("Loading blacklist finished: name=%s passwords=%s path=%s falsePositiveProbability=%s expectedFalsePositiveProbability=%s",
-                        name, passwordCount, path, fpp, expectedFfp);
+                LOG.infof("Loading blacklist with name %s from %s - end", name, path);
 
                 return filter;
             } catch (IOException e) {
-                throw new RuntimeException("Loading blacklist failed: Could not load password blacklist path=" + path, e);
-            }
-        }
-
-        protected void insertPasswordsInto(BloomFilter<String> filter) throws IOException {
-            try (BufferedReader br = newReader(path)) {
-                br.lines().forEach(filter::put);
+                throw new RuntimeException("Could not load password blacklist from path: " + path, e);
             }
         }
 
         /**
          * Determines password blacklist size to correctly size the {@link BloomFilter} backing this blacklist.
          *
-         * @return number of passwords found in the blacklist file
+         * @return
          * @throws IOException
          */
-        private long countPasswordsInBlacklistFile() throws IOException {
+        private long getPasswordCount() throws IOException {
 
-            /*
-             * TODO find a more efficient way to determine the password count,
-             * e.g. require a header-line in the password-blacklist file
-             */
+      /*
+       * TODO find a more efficient way to determine the password count,
+       * e.g. require a header-line in the password-blacklist file
+       */
             try (BufferedReader br = newReader(path)) {
                 return br.lines().count();
             }
@@ -355,15 +305,16 @@ public class BlacklistPasswordPolicyProviderFactory implements PasswordPolicyPro
         /**
          * Discovers password blacklists location.
          * <p>
-         * The following discovery options are currently implemented:
-         * <p>
          * <ol>
-         *   <li>system property {@code keycloak.password.blacklists.path} if present</li>
-         *   <li>SPI config property {@code blacklistsPath}</li>
-         *   <li>fallback to the {@code /data/password-blacklists} folder of the currently running Keycloak instance</li>
+         * <li>
+         * system property {@code keycloak.password.blacklists.path} if present
+         * </li>
+         * <li>SPI config property {@code blacklistsPath}</li>
          * </ol>
+         * and fallback to the {@code /data/password-blacklists} folder of the currently
+         * running wildfly instance.
          *
-         * @param config spi config
+         * @param config
          * @param defaultPathSupplier default path to use if not specified in a system prop or configuration
          * @return the detected blacklist path
          * @throws IllegalStateException if no blacklist folder could be detected

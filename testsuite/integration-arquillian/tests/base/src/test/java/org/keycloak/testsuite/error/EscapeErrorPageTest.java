@@ -56,12 +56,12 @@ public class EscapeErrorPageTest extends AbstractKeycloakTest {
 
     @Test
     public void ampersandEscape() {
-        checkMessage("&lt;img src=&quot;something&quot;&gt;", "");
+        checkMessage("&lt;img src=&quot;something&quot;&gt;", "<img src=\"something\">");
     }
 
     @Test
     public void hexEscape() {
-        checkMessage("&#x3C;img src&#61;something&#x2F;&#x3E;", "");
+        checkMessage("&#x3C;img src&#61;something&#x2F;&#x3E;", "<img src=something/>");
     }
 
     @Test

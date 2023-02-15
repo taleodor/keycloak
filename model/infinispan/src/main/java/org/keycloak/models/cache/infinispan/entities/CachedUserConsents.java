@@ -29,21 +29,14 @@ import java.util.List;
 public class CachedUserConsents extends AbstractRevisioned implements InRealm {
     private HashMap<String, CachedUserConsent> consents = new HashMap<>();
     private final String realmId;
-    private boolean allConsents;
 
     public CachedUserConsents(Long revision, String id, RealmModel realm,
-                              List<CachedUserConsent> consents) {
-        this(revision, id, realm, consents, true);
-    }
-
-    public CachedUserConsents(Long revision, String id, RealmModel realm,
-            List<CachedUserConsent> consents, boolean allConsents) {
+                              List<UserConsentModel> consents) {
         super(revision, id);
         this.realmId = realm.getId();
-        this.allConsents = allConsents;
         if (consents != null) {
-            for (CachedUserConsent consent : consents) {
-                this.consents.put(consent.getClientDbId(), consent);
+            for (UserConsentModel consent : consents) {
+                this.consents.put(consent.getClient().getId(), new CachedUserConsent(consent));
             }
         }
     }
@@ -56,9 +49,5 @@ public class CachedUserConsents extends AbstractRevisioned implements InRealm {
 
     public HashMap<String, CachedUserConsent> getConsents() {
         return consents;
-    }
-
-    public boolean isAllConsents() {
-        return allConsents;
     }
 }

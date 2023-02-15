@@ -3,7 +3,7 @@
     <parent>
         <artifactId>keycloak-model-pom</artifactId>
         <groupId>org.keycloak</groupId>
-        <version>999-SNAPSHOT</version>
+        <version>20.0.3</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -11,10 +11,17 @@
     <name>Keycloak Model Java Annotations and Processor</name>
     <description/>
 
-    <properties>
-        <maven.compiler.release>11</maven.compiler.release>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
-    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 
 </project>

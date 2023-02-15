@@ -77,7 +77,7 @@ public class UserSessionPersisterProviderTest extends KeycloakModelTest {
 
     @Override
     public void createEnvironment(KeycloakSession s) {
-        RealmModel realm = createRealm(s, "test");
+        RealmModel realm = s.realms().createRealm("test");
         realm.setOfflineSessionIdleTimeout(Constants.DEFAULT_OFFLINE_SESSION_IDLE_TIMEOUT);
         realm.setOfflineSessionMaxLifespan(Constants.DEFAULT_OFFLINE_SESSION_MAX_LIFESPAN);
         realm.setDefaultRole(s.roles().addRealmRole(realm, Constants.DEFAULT_ROLES_ROLE_PREFIX + "-" + realm.getName()));
@@ -432,7 +432,7 @@ public class UserSessionPersisterProviderTest extends KeycloakModelTest {
 
             for (int i = 0; i < USER_SESSION_COUNT; i++) {
                 // Having different offsets for each session (to ensure that lastSessionRefresh is also different)
-                setTimeOffset(i);
+                Time.setOffset(i);
 
                 UserSessionModel userSession = session.sessions().createUserSession(realm, user, "user1", "127.0.0.1", "form", true, null, null);
                 createClientSession(session, realmId, realm.getClientByClientId("test-app"), userSession, "http://redirect", "state");
@@ -464,7 +464,6 @@ public class UserSessionPersisterProviderTest extends KeycloakModelTest {
             }
             return null;
         });
-
     }
 
     @Test
@@ -496,7 +495,7 @@ public class UserSessionPersisterProviderTest extends KeycloakModelTest {
             persister.updateLastSessionRefreshes(realm, lastSessionRefresh, Collections.singleton(userSession1[0].getId()), true);
 
             // Increase time offset - 40 days
-            setTimeOffset(3456000);
+            Time.setOffset(3456000);
             try {
                 // Run expiration thread
                 persister.removeExpired(realm);
@@ -508,7 +507,7 @@ public class UserSessionPersisterProviderTest extends KeycloakModelTest {
 
             } finally {
                 // Cleanup
-                setTimeOffset(0);
+                Time.setOffset(0);
                 session.getKeycloakSessionFactory().publish(new ResetTimeOffsetEvent());
             }
         });

@@ -31,12 +31,8 @@ import java.util.stream.Collectors;
 
 import javax.naming.directory.SearchControls;
 
-import org.jboss.logging.Logger;
-import org.keycloak.common.util.UriUtils;
 import org.keycloak.component.ComponentModel;
 import org.keycloak.component.ComponentValidationException;
-import org.keycloak.models.Constants;
-import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.LDAPConstants;
 import org.keycloak.models.ModelException;
 import org.keycloak.models.RealmModel;
@@ -60,8 +56,6 @@ import org.keycloak.storage.ldap.mappers.membership.MembershipType;
  * @author <a href="mailto:mposolda@redhat.com">Marek Posolda</a>
  */
 public class LDAPUtils {
-
-    private static final Logger log = Logger.getLogger(LDAPUtils.class);
 
     /**
      * Method to crate a user in the LDAP. The user will be created when all
@@ -379,11 +373,5 @@ public class LDAPUtils {
         }
 
         return userModelProperties;
-    }
-
-    public static void setLDAPHostnameToKeycloakSession(KeycloakSession session,LDAPConfig ldapConfig) {
-        String hostname = UriUtils.getHost(ldapConfig.getConnectionUrl());
-        session.setAttribute(Constants.SSL_SERVER_HOST_ATTR, hostname);
-        log.tracef("Setting LDAP server hostname '%s' as KeycloakSession attribute", hostname);
     }
 }

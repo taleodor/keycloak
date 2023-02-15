@@ -27,7 +27,7 @@ public class JpaResourceServerMetadata extends MapResourceServerEntityImpl imple
     }
 
     public JpaResourceServerMetadata() {
-        super(DeepCloner.DUMB_CLONER);
+        super();
     }
 
     private Integer entityVersion;

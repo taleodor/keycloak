@@ -20,6 +20,7 @@ package org.keycloak.authorization;
 
 import javax.ws.rs.Path;
 
+import org.jboss.resteasy.spi.ResteasyProviderFactory;
 import org.keycloak.authorization.protection.ProtectionService;
 
 /**
@@ -35,6 +36,10 @@ public class AuthorizationService {
 
     @Path("/protection")
     public Object getProtectionService() {
-        return new ProtectionService(authorization);
+        ProtectionService service = new ProtectionService(authorization);
+
+        ResteasyProviderFactory.getInstance().injectProperties(service);
+
+        return service;
     }
 }

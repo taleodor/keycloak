@@ -54,6 +54,8 @@ public class PolicyTypeService extends PolicyService {
             return null;
         }
 
+        ResteasyProviderFactory.getInstance().injectProperties(resource);
+
         return resource;
     }
 

@@ -30,6 +30,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import javax.ws.rs.core.UriInfo;
 import org.jboss.logging.Logger;
+import org.jboss.resteasy.spi.HttpRequest;
 import org.keycloak.Config;
 import org.keycloak.common.util.Resteasy;
 import org.keycloak.config.HostnameOptions;
@@ -294,7 +295,7 @@ public final class DefaultHostnameProvider implements HostnameProvider, Hostname
 
     private int getRequestPort(UriInfo uriInfo) {
         KeycloakSession session = Resteasy.getContextData(KeycloakSession.class);
-        return session.getContext().getHttpRequest().getUri().getBaseUri().getPort();
+        return session.getContext().getContextObject(HttpRequest.class).getUri().getBaseUri().getPort();
     }
 
     private <T> T fromBaseUriOrDefault(Function<URI, T> resolver, URI baseUri, T defaultValue) {

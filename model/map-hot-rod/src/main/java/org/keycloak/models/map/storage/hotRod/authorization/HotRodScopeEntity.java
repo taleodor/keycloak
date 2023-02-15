@@ -17,9 +17,6 @@
 
 package org.keycloak.models.map.storage.hotRod.authorization;
 
-import org.infinispan.api.annotations.indexing.Basic;
-import org.infinispan.api.annotations.indexing.Indexed;
-import org.infinispan.api.annotations.indexing.Keyword;
 import org.infinispan.protostream.GeneratedSchema;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoDoc;
@@ -40,7 +37,7 @@ import java.util.Objects;
         modelClass = "org.keycloak.authorization.model.Scope",
         cacheName = "authz"
 )
-@Indexed
+@ProtoDoc("@Indexed")
 @ProtoDoc("schema-version: " + HotRodScopeEntity.VERSION)
 public class HotRodScopeEntity extends AbstractHotRodEntity {
 
@@ -58,30 +55,34 @@ public class HotRodScopeEntity extends AbstractHotRodEntity {
     }
 
 
-    @Basic(projectable = true)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     @ProtoField(number = 1)
     public Integer entityVersion = VERSION;
 
-    @Basic(projectable = true, sortable = true)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     @ProtoField(number = 2)
     public String id;
 
-    @Basic(sortable = true)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     @ProtoField(number = 3)
     public String realmId;
 
-    @Keyword(sortable = true, normalizer = "lowercase")
     @ProtoField(number = 4)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     public String name;
 
     @ProtoField(number = 5)
-    public String displayName;
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
+    public String nameLowercase;
 
     @ProtoField(number = 6)
+    public String displayName;
+
+    @ProtoField(number = 7)
     public String iconUri;
 
-    @Basic(sortable = true)
-    @ProtoField(number = 7)
+    @ProtoField(number = 8)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     public String resourceServerId;
 
     public static abstract class AbstractHotRodScopeEntity extends UpdatableHotRodEntityDelegateImpl<HotRodScopeEntity> implements MapScopeEntity {
@@ -104,6 +105,7 @@ public class HotRodScopeEntity extends AbstractHotRodEntity {
             HotRodScopeEntity entity = getHotRodEntity();
             entity.updated |= ! Objects.equals(entity.name, name);
             entity.name = name;
+            entity.nameLowercase = name == null ? null : name.toLowerCase();
         }
     }
 

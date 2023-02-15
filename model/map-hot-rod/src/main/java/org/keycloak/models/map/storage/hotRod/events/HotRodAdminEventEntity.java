@@ -17,8 +17,6 @@
 
 package org.keycloak.models.map.storage.hotRod.events;
 
-import org.infinispan.api.annotations.indexing.Basic;
-import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.protostream.GeneratedSchema;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoDoc;
@@ -36,7 +34,7 @@ import org.keycloak.models.map.storage.hotRod.common.UpdatableHotRodEntityDelega
         topLevelEntity = true,
         modelClass = "org.keycloak.events.admin.AdminEvent"
 )
-@Indexed
+@ProtoDoc("@Indexed")
 @ProtoDoc("schema-version: " + HotRodAdminEventEntity.VERSION)
 public class HotRodAdminEventEntity extends AbstractHotRodEntity {
 
@@ -52,55 +50,56 @@ public class HotRodAdminEventEntity extends AbstractHotRodEntity {
     public interface HotRodAdminEventEntitySchema extends GeneratedSchema {
         HotRodAdminEventEntitySchema INSTANCE = new HotRodAdminEventEntitySchemaImpl();
     }
-    @Basic(projectable = true)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     @ProtoField(number = 1)
     public Integer entityVersion = VERSION;
 
     @ProtoField(number = 2)
     public String id;
 
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     @ProtoField(number = 3)
     public Long expiration;
 
-    @Basic(sortable = true)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     @ProtoField(number = 4)
     public Long timestamp;
 
-    @Basic(sortable = true)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     @ProtoField(number = 5)
     public Integer operationType;
 
-    @Basic(sortable = true)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     @ProtoField(number = 6)
     public String authClientId;
 
-    @Basic(sortable = true)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     @ProtoField(number = 7)
     public String authIpAddress;
 
-    @Basic(sortable = true)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     @ProtoField(number = 8)
     public String authRealmId;
 
-    @Basic(sortable = true)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     @ProtoField(number = 9)
     public String authUserId;
 
     @ProtoField(number = 10)
     public String error;
 
-    @Basic(sortable = true)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     @ProtoField(number = 11)
     public String realmId;
 
     @ProtoField(number = 12)
     public String representation;
 
-    @Basic(sortable = true)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     @ProtoField(number = 13)
     public String resourcePath;
 
-    @Basic(sortable = true)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     @ProtoField(number = 14)
     public String resourceType;
 

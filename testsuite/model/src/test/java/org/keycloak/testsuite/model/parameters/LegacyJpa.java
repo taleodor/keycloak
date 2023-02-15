@@ -25,10 +25,7 @@ import org.keycloak.connections.jpa.updater.liquibase.conn.LiquibaseConnectionPr
 import org.keycloak.connections.jpa.updater.liquibase.conn.LiquibaseConnectionSpi;
 import org.keycloak.connections.jpa.updater.liquibase.lock.LiquibaseDBLockProviderFactory;
 import org.keycloak.events.jpa.JpaEventStoreProviderFactory;
-import org.keycloak.models.dblock.DBLockGlobalLockProviderFactory;
-import org.keycloak.models.dblock.DBLockSpi;
 import org.keycloak.models.jpa.session.JpaUserSessionPersisterProviderFactory;
-import org.keycloak.models.locking.GlobalLockProviderSpi;
 import org.keycloak.models.session.UserSessionPersisterSpi;
 import org.keycloak.migration.MigrationProviderFactory;
 import org.keycloak.migration.MigrationSpi;
@@ -68,8 +65,6 @@ public class LegacyJpa extends KeycloakModelParameters {
       .add(MigrationSpi.class)
       .add(LoginProtocolSpi.class)
 
-      .add(DBLockSpi.class)
-
       .build();
 
     static final Set<Class<? extends ProviderFactory>> ALLOWED_FACTORIES = ImmutableSet.<Class<? extends ProviderFactory>>builder()
@@ -88,7 +83,6 @@ public class LegacyJpa extends KeycloakModelParameters {
       .add(JpaUserProviderFactory.class)
       .add(LiquibaseConnectionProviderFactory.class)
       .add(LiquibaseDBLockProviderFactory.class)
-      .add(DBLockGlobalLockProviderFactory.class)
       .add(JpaUserSessionPersisterProviderFactory.class)
 
       //required for migrateModel
@@ -116,7 +110,6 @@ public class LegacyJpa extends KeycloakModelParameters {
           .spi("realm").defaultProvider("jpa")
           .spi("deploymentState").defaultProvider("jpa")
           .spi("dblock").defaultProvider("jpa")
-          .spi(GlobalLockProviderSpi.GLOBAL_LOCK).defaultProvider(DBLockGlobalLockProviderFactory.PROVIDER_ID)
         ;
     }
 }

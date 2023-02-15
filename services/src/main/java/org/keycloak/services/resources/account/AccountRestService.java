@@ -44,18 +44,20 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.jboss.resteasy.annotations.cache.NoCache;
-import org.keycloak.http.HttpRequest;
+import org.jboss.resteasy.spi.HttpRequest;
 import org.keycloak.common.ClientConnection;
 import org.keycloak.common.Profile;
 import org.keycloak.common.enums.AccountRestApiVersion;
 import org.keycloak.common.util.StringPropertyReplacer;
 import org.keycloak.events.Details;
 import org.keycloak.events.EventBuilder;
+import org.keycloak.events.EventStoreProvider;
 import org.keycloak.events.EventType;
 import org.keycloak.models.AccountRoles;
 import org.keycloak.models.AuthenticatedClientSessionModel;
@@ -99,35 +101,40 @@ import org.keycloak.validate.Validators;
  */
 public class AccountRestService {
 
-    private final HttpRequest request;
-
-    protected final HttpHeaders headers;
-
-    protected final ClientConnection clientConnection;
+    @Context
+    private HttpRequest request;
+    @Context
+    protected HttpHeaders headers;
+    @Context
+    protected ClientConnection clientConnection;
 
     private final KeycloakSession session;
+    private final ClientModel client;
     private final EventBuilder event;
-    private final Auth auth;
+    private EventStoreProvider eventStore;
+    private Auth auth;
     
     private final RealmModel realm;
     private final UserModel user;
     private final Locale locale;
     private final AccountRestApiVersion version;
 
-    public AccountRestService(KeycloakSession session, Auth auth, EventBuilder event, AccountRestApiVersion version) {
+    public AccountRestService(KeycloakSession session, Auth auth, ClientModel client, EventBuilder event, AccountRestApiVersion version) {
         this.session = session;
-        this.clientConnection = session.getContext().getConnection();
         this.auth = auth;
         this.realm = auth.getRealm();
         this.user = auth.getUser();
+        this.client = client;
         this.event = event;
         this.locale = session.getContext().resolveLocale(user);
         this.version = version;
         event.client(auth.getClient()).user(auth.getUser());
-        this.request = session.getContext().getHttpRequest();
-        this.headers = session.getContext().getRequestHeaders();
     }
     
+    public void init() {
+        eventStore = session.getProvider(EventStoreProvider.class);
+    }
+
     /**
      * Get account information.
      *
@@ -268,7 +275,7 @@ public class AccountRestService {
     public SessionResource sessions() {
         checkAccountApiEnabled();
         auth.requireOneOf(AccountRoles.MANAGE_ACCOUNT, AccountRoles.VIEW_PROFILE);
-        return new SessionResource(session, auth);
+        return new SessionResource(session, auth, request);
     }
 
     @Path("/credentials")
@@ -477,7 +484,7 @@ public class AccountRestService {
     
     @Path("/linked-accounts")
     public LinkedAccountsResource linkedAccounts() {
-        return new LinkedAccountsResource(session, request, auth, event, user);
+        return new LinkedAccountsResource(session, request, client, auth, event, user);
     }
 
     @Path("/groups")

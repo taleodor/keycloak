@@ -20,6 +20,7 @@ package org.keycloak.quarkus.runtime.storage.database.liquibase;
 import java.util.logging.Level;
 
 import liquibase.logging.core.AbstractLogger;
+import liquibase.logging.core.DefaultLogMessageFilter;
 import org.jboss.logging.Logger;
 
 /**
@@ -32,7 +33,7 @@ public class KeycloakLogger extends AbstractLogger {
     private final Logger delegate;
 
     public KeycloakLogger(final Class clazz) {
-        super();
+        super(new DefaultLogMessageFilter());
         this.delegate = Logger.getLogger(clazz);
     }
 

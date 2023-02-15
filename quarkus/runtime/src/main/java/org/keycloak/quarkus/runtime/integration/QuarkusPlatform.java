@@ -44,11 +44,6 @@ public class QuarkusPlatform implements PlatformProvider {
 
     private static final Logger log = Logger.getLogger(QuarkusPlatform.class);
 
-    @Override
-    public String name() {
-        return "Quarkus";
-    }
-
     public static void addInitializationException(Throwable throwable) {
         QuarkusPlatform platform = (QuarkusPlatform) Platform.getPlatform();
         platform.addDeferredException(throwable);

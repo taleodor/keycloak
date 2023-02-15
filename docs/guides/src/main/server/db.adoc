@@ -40,13 +40,6 @@ This command includes the minimum settings needed to connect to the database.
 
 The default schema is `keycloak`, but you can change it by using the `db-schema` configuration option.
 
-[WARNING]
-Do NOT use the `--optimized` flag for the `start` command if you want to use a particular DB (except the H2).
-Executing the build phase before starting the server instance is necessary.
-You can achieve it either by starting the instance without the `--optimized` flag,
-or by executing the `build` command before the optimized start.
-For more information, see <@links.server id="configuration"/>.
-
 == Overriding default connection settings
 
 The server uses JDBC as the underlying technology to communicate with the database. If the default connection settings are insufficient, you can specify a JDBC URL using the `db-url` configuration option.
@@ -97,10 +90,7 @@ For details on these properties and any performance implications, see the Oracle
 
 === Unicode support for a Microsoft SQL Server database
 
-Unicode characters are supported only for the special fields for a Microsoft SQL Server database. The database requires no special settings.
-
-The `sendStringParametersAsUnicode` property of JDBC driver should be set to `false` to significantly improve performance. Without this parameter,
-the Microsoft SQL Server might be unable to use indexes.
+Unicode characters are supported only for the special fields for a Microsoft SQL Server database. The JDBC driver and database require no special settings.
 
 === Configuring Unicode support for a MySQL database
 

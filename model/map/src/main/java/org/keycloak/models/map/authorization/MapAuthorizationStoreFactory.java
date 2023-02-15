@@ -116,14 +116,12 @@ public class MapAuthorizationStoreFactory implements AmphibianProviderFactory<St
             authorizationStore.getResourceServerStore().preRemove(realm);
         } else if (type == RESOURCE_SERVER_BEFORE_REMOVE) {
             MapAuthorizationStore authorizationStore = (MapAuthorizationStore) session.getProvider(StoreFactory.class);
-            RealmModel realm = (RealmModel) params[0];
-            ResourceServer resourceServer = (ResourceServer) params[1];
+            ResourceServer resourceServer = (ResourceServer) params[0];
 
-
-            authorizationStore.getScopeStore().preRemove(realm, resourceServer);
-            authorizationStore.getPolicyStore().preRemove(realm, resourceServer);
-            authorizationStore.getResourceStore().preRemove(realm, resourceServer);
-            authorizationStore.getPermissionTicketStore().preRemove(realm, resourceServer);
+            authorizationStore.getScopeStore().preRemove(resourceServer);
+            authorizationStore.getPolicyStore().preRemove(resourceServer);
+            authorizationStore.getResourceStore().preRemove(resourceServer);
+            authorizationStore.getPermissionTicketStore().preRemove(resourceServer);
         }
     }
 }

@@ -33,6 +33,8 @@ import liquibase.Scope;
 
 import org.hibernate.cfg.AvailableSettings;
 import org.infinispan.manager.DefaultCacheManager;
+import io.quarkus.smallrye.metrics.runtime.SmallRyeMetricsHandler;
+import io.vertx.core.Handler;
 import io.vertx.ext.web.RoutingContext;
 
 import org.keycloak.Config;
@@ -62,14 +64,6 @@ public class KeycloakRecorder {
     public static final String DEFAULT_HEALTH_ENDPOINT = "/health";
     public static final String DEFAULT_METRICS_ENDPOINT = "/metrics";
 
-    public void initConfig() {
-        Config.init(new MicroProfileConfigProvider());
-    }
-
-    public void configureProfile(Profile.ProfileName profileName, Map<Profile.Feature, Boolean> features) {
-        Profile.init(profileName, features);
-    }
-
     public void configureLiquibase(Map<String, List<String>> services) {
         ServiceLocator locator = Scope.getCurrentScope().getServiceLocator();
         if (locator instanceof FastServiceLocator)
@@ -81,12 +75,14 @@ public class KeycloakRecorder {
             Map<Class<? extends Provider>, String> defaultProviders,
             Map<String, ProviderFactory> preConfiguredProviders,
             List<ClasspathThemeProviderFactory.ThemesRepresentation> themes, boolean reaugmented) {
+        Config.init(new MicroProfileConfigProvider());
+        Profile.setInstance(new QuarkusProfile());
         QuarkusKeycloakSessionFactory.setInstance(new QuarkusKeycloakSessionFactory(factories, defaultProviders, preConfiguredProviders, themes, reaugmented));
     }
 
-    public RuntimeValue<CacheManagerFactory> createCacheInitializer(String config, boolean metricsEnabled, ShutdownContext shutdownContext) {
+    public RuntimeValue<CacheManagerFactory> createCacheInitializer(String config, ShutdownContext shutdownContext) {
         try {
-            CacheManagerFactory cacheManagerFactory = new CacheManagerFactory(config, metricsEnabled);
+            CacheManagerFactory cacheManagerFactory = new CacheManagerFactory(config);
 
             shutdownContext.addShutdownTask(new Runnable() {
                 @Override
@@ -112,6 +108,12 @@ public class KeycloakRecorder {
                 QuarkusKeycloakSessionFactory.getInstance().close();
             }
         });
+    }
+
+    public Handler<RoutingContext> createMetricsHandler(String path) {
+        SmallRyeMetricsHandler metricsHandler = new SmallRyeMetricsHandler();
+        metricsHandler.setMetricsPath(path);
+        return metricsHandler;
     }
 
     public HibernateOrmIntegrationRuntimeInitListener createUserDefinedUnitListener(String name) {

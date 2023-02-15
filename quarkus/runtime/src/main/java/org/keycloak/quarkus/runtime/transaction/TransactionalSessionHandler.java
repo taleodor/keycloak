@@ -39,7 +39,8 @@ public interface TransactionalSessionHandler {
     default KeycloakSession create() {
         KeycloakSessionFactory sessionFactory = getSessionFactory();
         KeycloakSession session = sessionFactory.create();
-        session.getTransactionManager().begin();
+        KeycloakTransactionManager tx = session.getTransactionManager();
+        tx.begin();
         return session;
     }
 
@@ -49,10 +50,22 @@ public interface TransactionalSessionHandler {
      * @param session a transactional session
      */
     default void close(KeycloakSession session) {
-        if (session == null || DefaultKeycloakSession.class.cast(session).isClosed()) {
+        if (DefaultKeycloakSession.class.cast(session).isClosed()) {
             return;
         }
 
-        session.close();
+        KeycloakTransactionManager tx = session.getTransactionManager();
+
+        try {
+            if (tx.isActive()) {
+                if (tx.getRollbackOnly()) {
+                    tx.rollback();
+                } else {
+                    tx.commit();
+                }
+            }
+        } finally {
+            session.close();
+        }
     }
 }

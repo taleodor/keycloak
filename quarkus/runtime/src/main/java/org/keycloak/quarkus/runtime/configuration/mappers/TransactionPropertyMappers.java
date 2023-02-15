@@ -39,8 +39,7 @@ public class TransactionPropertyMappers {
         ConfigValue storage = context.proceed(NS_KEYCLOAK_PREFIX.concat(STORAGE.getKey()));
 
         if (storage != null && StorageOptions.StorageType.jpa.name().equals(storage.getValue())) {
-            isJtaEnabled = true;
-            isXaEnabled = false;
+            isJtaEnabled = false;
         }
 
         if (!isJtaEnabled) {

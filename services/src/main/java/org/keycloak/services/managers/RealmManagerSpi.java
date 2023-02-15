@@ -20,10 +20,9 @@ package org.keycloak.services.managers;
 import org.keycloak.provider.Provider;
 import org.keycloak.provider.ProviderFactory;
 import org.keycloak.provider.Spi;
-import org.keycloak.storage.ImportRealmFromRepresentationEvent;
 
 /**
- * Provider to listen for {@link ImportRealmFromRepresentationEvent} events.
+ * Provider to listen for {@link org.keycloak.storage.ImportRealmFromRepresentation} events.
  * If that is no longer needed after further steps around the legacy storage migration, it can be removed.
  *
  * @author Alexander Schwartz

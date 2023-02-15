@@ -23,7 +23,6 @@ import org.keycloak.Token;
 import org.keycloak.TokenCategory;
 import org.keycloak.common.ClientConnection;
 import org.keycloak.models.ClientModel;
-import org.keycloak.models.KeycloakContext;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.services.managers.AuthenticationManager;
@@ -125,15 +124,13 @@ public class RestartLoginCookie implements Token {
         String encoded = session.tokens().encode(restart);
         String path = AuthenticationManager.getRealmCookiePath(realm, uriInfo);
         boolean secureOnly = realm.getSslRequired().isRequired(connection);
-        CookieHelper.addCookie(KC_RESTART, encoded, path, null, null, -1, secureOnly, true, session);
+        CookieHelper.addCookie(KC_RESTART, encoded, path, null, null, -1, secureOnly, true);
     }
 
-    public static void expireRestartCookie(RealmModel realm, UriInfo uriInfo, KeycloakSession session) {
-        KeycloakContext context = session.getContext();
-        ClientConnection connection = context.getConnection();
+    public static void expireRestartCookie(RealmModel realm, ClientConnection connection, UriInfo uriInfo) {
         String path = AuthenticationManager.getRealmCookiePath(realm, uriInfo);
         boolean secureOnly = realm.getSslRequired().isRequired(connection);
-        CookieHelper.addCookie(KC_RESTART, "", path, null, null, 0, secureOnly, true, session);
+        CookieHelper.addCookie(KC_RESTART, "", path, null, null, 0, secureOnly, true);
     }
 
     public static Cookie getRestartCookie(KeycloakSession session){

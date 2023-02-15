@@ -17,7 +17,7 @@
 
 package org.keycloak.services.resources.admin;
 
-import org.keycloak.http.HttpResponse;
+import org.jboss.resteasy.spi.HttpResponse;
 import org.keycloak.events.admin.OperationType;
 import org.keycloak.events.admin.ResourceType;
 import org.keycloak.models.ClientInitialAccessModel;
@@ -35,6 +35,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -50,12 +51,12 @@ public class ClientInitialAccessResource {
     private final RealmModel realm;
     private final AdminEventBuilder adminEvent;
 
+    @Context
     protected KeycloakSession session;
 
-    public ClientInitialAccessResource(KeycloakSession session, AdminPermissionEvaluator auth, AdminEventBuilder adminEvent) {
-        this.session = session;
+    public ClientInitialAccessResource(RealmModel realm, AdminPermissionEvaluator auth, AdminEventBuilder adminEvent) {
         this.auth = auth;
-        this.realm = session.getContext().getRealm();
+        this.realm = realm;
         this.adminEvent = adminEvent.resource(ResourceType.CLIENT_INITIAL_ACCESS_MODEL);
 
     }
@@ -69,7 +70,7 @@ public class ClientInitialAccessResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public ClientInitialAccessPresentation create(ClientInitialAccessCreatePresentation config) {
+    public ClientInitialAccessPresentation create(ClientInitialAccessCreatePresentation config, @Context final HttpResponse response) {
         auth.clients().requireManage();
 
         int expiration = config.getExpiration() != null ? config.getExpiration() : 0;
@@ -84,10 +85,8 @@ public class ClientInitialAccessResource {
         String token = ClientRegistrationTokenUtils.createInitialAccessToken(session, realm, clientInitialAccessModel);
         rep.setToken(token);
 
-        HttpResponse response = session.getContext().getHttpResponse();
-
         response.setStatus(Response.Status.CREATED.getStatusCode());
-        response.addHeader(HttpHeaders.LOCATION, session.getContext().getUri().getAbsolutePathBuilder().path(clientInitialAccessModel.getId()).build().toString());
+        response.getOutputHeaders().add(HttpHeaders.LOCATION, session.getContext().getUri().getAbsolutePathBuilder().path(clientInitialAccessModel.getId()).build().toString());
 
         return rep;
     }

@@ -8,10 +8,8 @@ import org.keycloak.OAuth2Constants;
 import org.keycloak.OAuthErrorException;
 import org.keycloak.admin.client.resource.ClientResource;
 import org.keycloak.common.util.Base64Url;
-import org.keycloak.crypto.KeyUse;
 import org.keycloak.events.Details;
 import org.keycloak.events.Errors;
-import org.keycloak.jose.jwk.JWK;
 import org.keycloak.jose.jws.JWSHeader;
 import org.keycloak.jose.jws.JWSInput;
 import org.keycloak.models.utils.KeycloakModelUtils;
@@ -30,7 +28,6 @@ import org.keycloak.testsuite.util.UserBuilder;
 import javax.ws.rs.core.UriBuilder;
 import java.security.MessageDigest;
 import java.util.List;
-import java.util.stream.Stream;
 
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
@@ -420,10 +417,7 @@ public class OAuthProofKeyForCodeExchangeTest extends AbstractKeycloakTest {
         Assert.assertThat(response.getRefreshExpiresIn(), allOf(greaterThanOrEqualTo(1750), lessThanOrEqualTo(1800)));
         assertEquals("Bearer", response.getTokenType());
 
-        String expectedKid = Stream.of(oauth.doCertsRequest("test").getKeys())
-                .filter(jwk -> KeyUse.SIG.getSpecName().equals(jwk.getPublicKeyUse()))
-                .map(JWK::getKeyId)
-                .findFirst().orElseThrow(() -> new AssertionError("Was not able to find key with usage SIG in the 'test' realm keys"));
+        String expectedKid = oauth.doCertsRequest("test").getKeys()[0].getKeyId();
 
         JWSHeader header = new JWSInput(response.getAccessToken()).getHeader();
         assertEquals("RS256", header.getAlgorithm().name());

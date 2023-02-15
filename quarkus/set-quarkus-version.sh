@@ -15,19 +15,9 @@
 # limitations under the License.
 #
 
-function revertChanges() {
-    echo "Reverting version changes."
-    git checkout ../.
-}
-
 if [ "$1" == "-h" ]; then
   echo "Change the Quarkus version to a specific version."
   echo "Usage: set-quarkus-version <version>"
-  exit
-fi
-
-if [ "$1" == "--revert" ]; then
-  revertChanges
   exit
 fi
 
@@ -49,6 +39,7 @@ fi
 QUARKUS_BOM=$(curl -s "$QUARKUS_BOM_URL")
 
 echo "Setting Quarkus version: $QUARKUS_VERSION"
+$(mvn -f ../pom.xml versions:revert 1> /dev/null)
 $(mvn versions:set-property -f ../pom.xml -Dproperty=quarkus.version -DnewVersion="$QUARKUS_VERSION" 1> /dev/null)
 
 DEPENDENCIES_LIST="resteasy jackson-bom hibernate-orm mysql-jdbc postgresql-jdbc microprofile-metrics-api wildfly-common wildfly-elytron"
@@ -63,8 +54,7 @@ for dependency in $DEPENDENCIES_LIST; do
         exit 1
     fi
     echo "Setting $VERSION to $dependency"
-    mvn versions:set-property -f ../pom.xml -Dproperty="$dependency".version -DnewVersion="$VERSION" 1> /dev/null
-    mvn versions:set-property -f ./pom.xml -Dproperty="$dependency".version -DnewVersion="$VERSION" 1> /dev/null
+    $(mvn versions:set-property -pl . -Dproperty="$dependency".version -DnewVersion="$VERSION" 1> /dev/null)
 done
 
 echo ""

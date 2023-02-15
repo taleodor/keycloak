@@ -99,10 +99,6 @@ public interface KeyManager {
             this.certificate = certificate;
         }
 
-        public ActiveRsaKey(KeyWrapper keyWrapper) {
-            this(keyWrapper.getKid(), (PrivateKey) keyWrapper.getPrivateKey(), (PublicKey) keyWrapper.getPublicKey(), keyWrapper.getCertificate());
-        }
-
         public String getKid() {
             return kid;
         }

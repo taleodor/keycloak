@@ -19,8 +19,6 @@ package org.keycloak.services;
 
 import org.keycloak.common.ClientConnection;
 import org.keycloak.common.util.Resteasy;
-import org.keycloak.http.HttpRequest;
-import org.keycloak.http.HttpResponse;
 import org.keycloak.locale.LocaleSelectorProvider;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.KeycloakContext;
@@ -47,13 +45,13 @@ public class DefaultKeycloakContext implements KeycloakContext {
 
     private ClientModel client;
 
+    private ClientConnection connection;
+
     private KeycloakSession session;
 
     private Map<UrlType, KeycloakUriInfo> uriInfo;
 
     private AuthenticationSessionModel authenticationSession;
-    private HttpRequest request;
-    private HttpResponse response;
 
     public DefaultKeycloakContext(KeycloakSession session) {
         this.session = session;
@@ -76,7 +74,8 @@ public class DefaultKeycloakContext implements KeycloakContext {
                 uriInfo = new HashMap<>();
             }
 
-            uriInfo.put(type, new KeycloakUriInfo(session, type, getHttpRequest().getUri()));
+            UriInfo originalUriInfo = getContextObject(UriInfo.class);
+            uriInfo.put(type, new KeycloakUriInfo(session, type, originalUriInfo));
         }
         return uriInfo.get(type);
     }
@@ -86,15 +85,9 @@ public class DefaultKeycloakContext implements KeycloakContext {
         return getUri(UrlType.FRONTEND);
     }
 
-    /**
-     * @deprecated
-     * Use {@link #getHttpRequest()} to obtain the request headers.
-     * @return
-     */
-    @Deprecated
     @Override
     public HttpHeaders getRequestHeaders() {
-        return getHttpRequest().getHttpHeaders();
+        return getContextObject(HttpHeaders.class);
     }
 
     @Override
@@ -143,39 +136,4 @@ public class DefaultKeycloakContext implements KeycloakContext {
         this.authenticationSession = authenticationSession;
     }
 
-    @Override
-    public HttpRequest getHttpRequest() {
-        if (request == null) {
-            synchronized (this) {
-                request = getContextObject(HttpRequest.class);
-                if (request == null) {
-                    request = createHttpRequest();
-                }
-            }
-        }
-
-        return request;
-    }
-
-    @Override
-    public HttpResponse getHttpResponse() {
-        if (response == null) {
-            synchronized (this) {
-                response = getContextObject(HttpResponse.class);
-                if (response == null) {
-                    response = createHttpResponse();
-                }
-            }
-        }
-
-        return response;
-    }
-
-    protected HttpRequest createHttpRequest() {
-        return new HttpRequestImpl(getContextObject(org.jboss.resteasy.spi.HttpRequest.class));
-    }
-
-    protected HttpResponse createHttpResponse() {
-        return new HttpResponseImpl(getContextObject(org.jboss.resteasy.spi.HttpResponse.class));
-    }
 }

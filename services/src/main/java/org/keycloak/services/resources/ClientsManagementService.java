@@ -18,7 +18,7 @@ package org.keycloak.services.resources;
 
 import org.jboss.logging.Logger;
 import org.jboss.resteasy.spi.BadRequestException;
-import org.keycloak.http.HttpRequest;
+import org.jboss.resteasy.spi.HttpRequest;
 import javax.ws.rs.NotAuthorizedException;
 import org.keycloak.OAuthErrorException;
 import org.keycloak.common.ClientConnection;
@@ -39,11 +39,13 @@ import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.ext.Providers;
 
 /**
  * @author <a href="mailto:mposolda@redhat.com">Marek Posolda</a>
@@ -52,25 +54,28 @@ public class ClientsManagementService {
 
     private static final Logger logger = Logger.getLogger(ClientsManagementService.class);
 
-    private final RealmModel realm;
+    private RealmModel realm;
 
-    private final EventBuilder event;
+    private EventBuilder event;
 
-    private final HttpRequest request;
+    @Context
+    private HttpRequest request;
 
-    protected final HttpHeaders headers;
+    @Context
+    protected HttpHeaders headers;
 
-    private final ClientConnection clientConnection;
+    @Context
+    private ClientConnection clientConnection;
 
-    protected final KeycloakSession session;
+    @Context
+    protected Providers providers;
 
-    public ClientsManagementService(KeycloakSession session, EventBuilder event) {
-        this.session = session;
-        this.clientConnection = session.getContext().getConnection();
-        this.realm = session.getContext().getRealm();
+    @Context
+    protected KeycloakSession session;
+
+    public ClientsManagementService(RealmModel realm, EventBuilder event) {
+        this.realm = realm;
         this.event = event;
-        this.request = session.getContext().getHttpRequest();
-        this.headers = session.getContext().getRequestHeaders();
     }
 
     public static UriBuilder clientsManagementBaseUrl(UriBuilder baseUriBuilder) {

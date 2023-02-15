@@ -24,7 +24,7 @@ import static org.keycloak.utils.LockObjectsForModification.lockUserSessionsForM
 
 import org.jboss.logging.Logger;
 import org.jboss.resteasy.annotations.cache.NoCache;
-import org.keycloak.http.HttpRequest;
+import org.jboss.resteasy.spi.HttpRequest;
 import org.keycloak.Config;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.OAuthErrorException;
@@ -88,12 +88,20 @@ import javax.ws.rs.OPTIONS;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static org.keycloak.models.UserSessionModel.State.LOGGED_OUT;
+import static org.keycloak.models.UserSessionModel.State.LOGGING_OUT;
+import static org.keycloak.services.resources.LoginActionsService.SESSION_CODE;
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
@@ -101,13 +109,17 @@ import java.util.Set;
 public class LogoutEndpoint {
     private static final Logger logger = Logger.getLogger(LogoutEndpoint.class);
 
-    private final KeycloakSession session;
+    @Context
+    private KeycloakSession session;
 
-    private final ClientConnection clientConnection;
+    @Context
+    private ClientConnection clientConnection;
 
-    private final HttpRequest request;
+    @Context
+    private HttpRequest request;
 
-    private final HttpHeaders headers;
+    @Context
+    private HttpHeaders headers;
 
     private final TokenManager tokenManager;
     private final RealmModel realm;
@@ -119,16 +131,12 @@ public class LogoutEndpoint {
 
     private Cors cors;
 
-    public LogoutEndpoint(KeycloakSession session, TokenManager tokenManager, EventBuilder event, OIDCProviderConfig providerConfig) {
-        this.session = session;
-        this.clientConnection = session.getContext().getConnection();
+    public LogoutEndpoint(TokenManager tokenManager, RealmModel realm, EventBuilder event, OIDCProviderConfig providerConfig) {
         this.tokenManager = tokenManager;
-        this.realm = session.getContext().getRealm();
+        this.realm = realm;
         this.event = event;
         this.providerConfig = providerConfig;
         this.offlineSessionsLazyLoadingEnabled = !Config.scope("userSessions").scope("infinispan").getBoolean("preloadOfflineSessionsFromDatabase", false);
-        this.request = session.getContext().getHttpRequest();
-        this.headers = session.getContext().getRequestHeaders();
     }
 
     @Path("/")

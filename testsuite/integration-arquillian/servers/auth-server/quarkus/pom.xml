@@ -5,7 +5,7 @@
     <parent>
         <artifactId>integration-arquillian-servers-auth-server</artifactId>
         <groupId>org.keycloak.testsuite</groupId>
-        <version>999-SNAPSHOT</version>
+        <version>20.0.3</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -352,19 +352,8 @@
                                     <goal>copy-dependencies</goal>
                                 </goals>
                                 <configuration>
-                                    <outputDirectory>${auth.server.home}/providers</outputDirectory>
+                                    <outputDirectory>${auth.server.home}/lib/bootstrap</outputDirectory>
                                     <includeArtifactIds>bc-fips,bctls-fips,bcpkix-fips</includeArtifactIds>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>copy-bcfips-deps-client</id>
-                                <phase>generate-resources</phase>
-                                <goals>
-                                    <goal>copy-dependencies</goal>
-                                </goals>
-                                <configuration>
-                                    <outputDirectory>${auth.server.home}/bin/client/lib</outputDirectory>
-                                    <includeArtifactIds>bc-fips,bctls-fips</includeArtifactIds>
                                 </configuration>
                             </execution>
                         </executions>

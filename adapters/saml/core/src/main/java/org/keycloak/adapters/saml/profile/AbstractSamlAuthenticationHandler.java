@@ -533,8 +533,7 @@ public abstract class AbstractSamlAuthenticationHandler implements SamlAuthentic
             // We'll need to decrypt it first.
             Document encryptedAssertionDocument = DocumentUtil.createDocument();
             encryptedAssertionDocument.appendChild(encryptedAssertionDocument.importNode(encryptedAssertion, true));
-
-            return XMLEncryptionUtil.decryptElementInDocument(encryptedAssertionDocument, data -> Collections.singletonList(deployment.getDecryptionKey()));
+            return XMLEncryptionUtil.decryptElementInDocument(encryptedAssertionDocument, deployment.getDecryptionKey());
         }
         return DocumentUtil.getElement(responseHolder.getSamlDocument(), new QName(JBossSAMLConstants.ASSERTION.get()));
     }

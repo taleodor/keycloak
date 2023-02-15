@@ -20,7 +20,7 @@
     <parent>
         <artifactId>keycloak-parent</artifactId>
         <groupId>org.keycloak</groupId>
-        <version>999-SNAPSHOT</version>
+        <version>20.0.3</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <name>Keycloak Model Parent</name>
@@ -41,6 +41,5 @@
         <module>build-processor</module>
         <module>map-hot-rod</module>
         <module>map-ldap</module>
-        <module>map-file</module>
     </modules>
 </project>

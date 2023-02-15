@@ -146,11 +146,6 @@ public class IdpReviewProfileAuthenticator extends AbstractIdpAuthenticator {
             public String getUsername() {
                 return userCtx.getUsername();
             }
-
-            @Override
-            public String getServiceAccountClientLink() {
-                return null;
-            }
         };
 
         UserProfileProvider profileProvider = context.getSession().getProvider(UserProfileProvider.class);

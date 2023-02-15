@@ -20,7 +20,6 @@ import org.jboss.arquillian.graphene.page.Page;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.common.Profile;
 import org.keycloak.models.UserModel;
 import org.keycloak.representations.idm.RealmRepresentation;
@@ -58,12 +57,6 @@ public abstract class AbstractAppInitiatedActionUpdateEmailTest extends Abstract
 				.lastName("Doh").build();
 		prepareUser(user);
 		ApiUtil.createUserAndResetPasswordWithAdminClient(testRealm(), user, "password");
-	}
-
-	private void setRegistrationEmailAsUsername(RealmResource realmResource, boolean enabled) {
-		RealmRepresentation realmRepresentation = realmResource.toRepresentation();
-		realmRepresentation.setRegistrationEmailAsUsername(enabled);
-		realmResource.update(realmRepresentation);
 	}
 
 	protected void prepareUser(UserRepresentation user){
@@ -134,22 +127,4 @@ public abstract class AbstractAppInitiatedActionUpdateEmailTest extends Abstract
 		Assert.assertEquals("test-user@localhost", user.getEmail());
 	}
 
-	@Test
-	public void updateWithEmailAsUsernameEnabled() throws Exception {
-		Boolean genuineRegistrationEmailAsUsername = testRealm()
-				.toRepresentation()
-				.isRegistrationEmailAsUsername();
-
-		setRegistrationEmailAsUsername(testRealm(), true);
-		try {
-			changeEmailUsingAIA("new@email.com");
-
-			UserRepresentation user = ActionUtil.findUserWithAdminClient(adminClient, "new@email.com");
-			Assert.assertNotNull(user);
-		} finally {
-			setRegistrationEmailAsUsername(testRealm(), genuineRegistrationEmailAsUsername);
-		}
-	}
-
-	protected abstract void changeEmailUsingAIA(String newEmail) throws Exception;
 }

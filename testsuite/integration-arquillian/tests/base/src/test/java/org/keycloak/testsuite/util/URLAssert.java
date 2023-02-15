@@ -177,7 +177,7 @@ public class URLAssert {
         public void assertResponse(CloseableHttpResponse response) throws IOException {
             HttpEntity entity = response.getEntity();
             Header contentType = entity.getContentType();
-            Assert.assertTrue(contentType.getValue().startsWith("application/json"));
+            Assert.assertEquals("application/json", contentType.getValue());
 
             char [] buf = new char[8192];
             StringWriter out = new StringWriter();

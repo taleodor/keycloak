@@ -17,8 +17,7 @@
 
 package org.keycloak.testsuite.pages.social;
 
-import org.keycloak.testsuite.util.WaitUtils;
-import org.openqa.selenium.Keys;
+import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
 
@@ -26,25 +25,26 @@ import org.openqa.selenium.support.FindBy;
  * @author Vaclav Muzikar <vmuzikar@redhat.com>
  */
 public class TwitterLoginPage extends AbstractSocialLoginPage {
-
-    @FindBy(xpath = "//input[@type='text' and @name='text']")
+    @FindBy(id = "username_or_email")
     private WebElement usernameInput;
 
-    @FindBy(xpath = "//input[@type='password']")
+    @FindBy(id = "password")
     private WebElement passwordInput;
+
+    @FindBy(id = "allow")
+    private WebElement loginButton;
 
     @Override
     public void login(String user, String password) {
-        // new login page is two phase login (username and then password) and it
-        // needs lots of JS, twitter does not work with default HtmlUnit driver
-        usernameInput.clear();
-        usernameInput.sendKeys(user);
-        usernameInput.sendKeys(Keys.RETURN);
-
-        // wait for the password input to appear
-        WaitUtils.waitUntilElement(passwordInput).is().visible();
-        passwordInput.clear();
-        passwordInput.sendKeys(password);
-        passwordInput.sendKeys(Keys.RETURN);
+        try {
+            usernameInput.clear();
+            usernameInput.sendKeys(user);
+            passwordInput.sendKeys(password);
+        }
+        catch (NoSuchElementException e) { // at some conditions we are already logged in and just need to confirm it
+        }
+        finally {
+            loginButton.click();
+        }
     }
 }

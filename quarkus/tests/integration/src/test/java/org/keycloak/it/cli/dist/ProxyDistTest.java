@@ -24,6 +24,8 @@ import static org.hamcrest.Matchers.containsString;
 import org.junit.Assert;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.keycloak.it.cli.dist.util.CopyTLSKeystore;
+import org.keycloak.it.junit5.extension.BeforeStartDistribution;
 import org.keycloak.it.junit5.extension.DistributionTest;
 import org.keycloak.it.junit5.extension.RawDistOnly;
 import org.keycloak.protocol.oidc.representations.OIDCConfigurationRepresentation;
@@ -31,7 +33,8 @@ import org.keycloak.protocol.oidc.representations.OIDCConfigurationRepresentatio
 import io.quarkus.test.junit.main.Launch;
 import io.restassured.RestAssured;
 
-@DistributionTest(keepAlive = true, enableTls = true)
+@DistributionTest(keepAlive = true)
+@BeforeStartDistribution(CopyTLSKeystore.class)
 @RawDistOnly(reason = "Containers are immutable")
 public class ProxyDistTest {
 

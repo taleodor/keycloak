@@ -18,7 +18,8 @@ package org.keycloak.services.resources;
 
 import org.jboss.logging.Logger;
 import org.jboss.resteasy.annotations.cache.NoCache;
-import org.keycloak.http.HttpRequest;
+import org.jboss.resteasy.spi.HttpRequest;
+import org.jboss.resteasy.spi.ResteasyProviderFactory;
 import org.keycloak.OAuthErrorException;
 import org.keycloak.authentication.AuthenticationProcessor;
 import org.keycloak.authentication.authenticators.broker.AbstractIdpAuthenticator;
@@ -98,6 +99,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -132,26 +134,26 @@ public class IdentityBrokerService implements IdentityProvider.AuthenticationCal
 
     private final RealmModel realmModel;
 
-    private final KeycloakSession session;
+    @Context
+    private KeycloakSession session;
 
-    private final ClientConnection clientConnection;
+    @Context
+    private ClientConnection clientConnection;
 
-    private final HttpRequest request;
+    @Context
+    private HttpRequest request;
 
-    private final HttpHeaders headers;
+    @Context
+    private HttpHeaders headers;
 
     private EventBuilder event;
 
 
-    public IdentityBrokerService(KeycloakSession session) {
-        this.session = session;
-        this.clientConnection= session.getContext().getConnection();
-        realmModel = session.getContext().getRealm();
+    public IdentityBrokerService(RealmModel realmModel) {
         if (realmModel == null) {
             throw new IllegalArgumentException("Realm can not be null.");
         }
-        this.request = session.getContext().getHttpRequest();
-        this.headers = session.getContext().getRequestHeaders();
+        this.realmModel = realmModel;
     }
 
     public void init() {
@@ -416,7 +418,9 @@ public class IdentityBrokerService implements IdentityProvider.AuthenticationCal
             throw new NotFoundException(e.getMessage());
         }
 
-        return identityProvider.callback(realmModel, this, event);
+        Object callback = identityProvider.callback(realmModel, this, event);
+        ResteasyProviderFactory.getInstance().injectProperties(callback);
+        return callback;
     }
 
     @Path("{provider_id}/token")
@@ -472,10 +476,6 @@ public class IdentityBrokerService implements IdentityProvider.AuthenticationCal
 
                     if (identity == null) {
                         return corsResponse(badRequest("User [" + authResult.getUser().getId() + "] is not associated with identity provider [" + providerId + "]."), clientModel);
-                    }
-
-                    if (identity.getToken() == null) {
-                        return corsResponse(notFound("No token stored for user [" + authResult.getUser().getId() + "] with associated identity provider [" + providerId + "]."), clientModel);
                     }
 
                     this.event.success();
@@ -1210,7 +1210,7 @@ public class IdentityBrokerService implements IdentityProvider.AuthenticationCal
         if (errorMessage != null) processor.setForwardedErrorMessage(new FormMessage(null, errorMessage));
 
         try {
-            CacheControlUtil.noBackButtonCacheControlHeader(session);
+            CacheControlUtil.noBackButtonCacheControlHeader();
             return processor.authenticate();
         } catch (Exception e) {
             return processor.handleBrowserException(e);
@@ -1226,11 +1226,6 @@ public class IdentityBrokerService implements IdentityProvider.AuthenticationCal
     private Response forbidden(String message) {
         fireErrorEvent(message);
         return ErrorResponse.error(message, Response.Status.FORBIDDEN);
-    }
-
-    private Response notFound(String message) {
-        fireErrorEvent(message);
-        return ErrorResponse.error(message, Response.Status.NOT_FOUND);
     }
 
     public static IdentityProvider getIdentityProvider(KeycloakSession session, RealmModel realm, String alias) {

@@ -358,7 +358,10 @@ public class OIDCAdvancedConfigWrapper extends AbstractClientConfigWrapper {
 
     public List<String> getPostLogoutRedirectUris() {
         List<String> postLogoutRedirectUris = getAttributeMultivalued(OIDCConfigAttributes.POST_LOGOUT_REDIRECT_URIS);
-        if(postLogoutRedirectUris == null || postLogoutRedirectUris.isEmpty() || postLogoutRedirectUris.get(0).equals("+")) {
+        if(postLogoutRedirectUris == null || postLogoutRedirectUris.isEmpty()) {
+            return null;
+        }
+        else if (postLogoutRedirectUris.get(0).equals("+")) {
             if(clientModel != null) {
                 return new ArrayList(clientModel.getRedirectUris());
             }
@@ -366,9 +369,6 @@ public class OIDCAdvancedConfigWrapper extends AbstractClientConfigWrapper {
                 return clientRep.getRedirectUris();
             }
             return null;
-        }
-        else if(postLogoutRedirectUris.get(0).equals("-")) {
-            return new ArrayList<String>();
         }
         else {
             return postLogoutRedirectUris;

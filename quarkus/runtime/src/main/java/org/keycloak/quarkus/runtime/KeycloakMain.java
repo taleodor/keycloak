@@ -38,8 +38,9 @@ import io.quarkus.runtime.Quarkus;
 
 import org.jboss.logging.Logger;
 import org.keycloak.Config;
+import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
-import org.keycloak.models.utils.KeycloakModelUtils;
+import org.keycloak.models.KeycloakTransactionManager;
 import org.keycloak.quarkus.runtime.cli.ExecutionExceptionHandler;
 import org.keycloak.quarkus.runtime.cli.Picocli;
 import org.keycloak.common.Version;
@@ -158,16 +159,24 @@ public class KeycloakMain implements QuarkusApplication {
         }
 
         KeycloakSessionFactory sessionFactory = KeycloakApplication.getSessionFactory();
+        KeycloakSession session = sessionFactory.create();
+        KeycloakTransactionManager transaction = session.getTransactionManager();
 
         try {
-            KeycloakModelUtils.runJobInTransaction(sessionFactory, session -> {
-                new ApplianceBootstrap(session).createMasterRealmUser(adminUserName, adminPassword);
-                ServicesLogger.LOGGER.addUserSuccess(adminUserName, Config.getAdminRealm());
-            });
+            transaction.begin();
+
+            new ApplianceBootstrap(session).createMasterRealmUser(adminUserName, adminPassword);
+            ServicesLogger.LOGGER.addUserSuccess(adminUserName, Config.getAdminRealm());
+
+            transaction.commit();
         } catch (IllegalStateException e) {
+            session.getTransactionManager().rollback();
             ServicesLogger.LOGGER.addUserFailedUserExists(adminUserName, Config.getAdminRealm());
         } catch (Throwable t) {
+            session.getTransactionManager().rollback();
             ServicesLogger.LOGGER.addUserFailed(t, adminUserName, Config.getAdminRealm());
+        } finally {
+            session.close();
         }
     }
 }

@@ -58,27 +58,22 @@ public class AppInitiatedActionUpdateEmailWithVerificationTest extends AbstractA
 		user.setEmailVerified(true);
 	}
 
-	@Override
-	protected void changeEmailUsingAIA(String newEmail) throws Exception {
+	@Test
+	public void updateEmail() throws IOException, MessagingException {
 		doAIA();
 		loginPage.login("test-user@localhost", "password");
 
 		emailUpdatePage.assertCurrent();
 		assertTrue(emailUpdatePage.isCancelDisplayed());
-		emailUpdatePage.changeEmail(newEmail);
+		emailUpdatePage.changeEmail("new@localhost");
 
-		events.expect(EventType.SEND_VERIFY_EMAIL).detail(Details.EMAIL, newEmail).assertEvent();
+		events.expect(EventType.SEND_VERIFY_EMAIL).detail(Details.EMAIL, "new@localhost").assertEvent();
 		Assert.assertEquals("test-user@localhost", ActionUtil.findUserWithAdminClient(adminClient, "test-user@localhost").getEmail());
 
-		driver.navigate().to(fetchEmailConfirmationLink(newEmail));
+		driver.navigate().to(fetchEmailConfirmationLink("new@localhost"));
 
 		infoPage.assertCurrent();
-		assertEquals(String.format("The account email has been successfully updated to %s.", newEmail), infoPage.getInfo());
-	}
-
-	@Test
-	public void updateEmail() throws Exception {
-		changeEmailUsingAIA("new@localhost");
+		assertEquals("The account email has been successfully updated to new@localhost.", infoPage.getInfo());
 
 		events.expect(EventType.UPDATE_EMAIL)
 				.detail(Details.PREVIOUS_EMAIL, "test-user@localhost")

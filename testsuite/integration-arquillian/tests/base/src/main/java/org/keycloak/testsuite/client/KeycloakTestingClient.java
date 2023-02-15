@@ -22,9 +22,7 @@ import javax.ws.rs.core.Response;
 import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
-import org.junit.Assert;
 import org.keycloak.common.Profile;
-import org.keycloak.testsuite.ProfileAssume;
 import org.keycloak.testsuite.client.resources.TestApplicationResource;
 import org.keycloak.testsuite.client.resources.TestExampleCompanyResource;
 import org.keycloak.testsuite.client.resources.TestSamlApplicationResource;
@@ -32,9 +30,6 @@ import org.keycloak.testsuite.client.resources.TestingResource;
 import org.keycloak.testsuite.runonserver.*;
 import org.keycloak.testsuite.util.AdminClientUtil;
 import org.keycloak.util.JsonSerialization;
-
-import java.util.List;
-import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 
@@ -79,15 +74,15 @@ public class KeycloakTestingClient implements AutoCloseable {
     }
 
     public void enableFeature(Profile.Feature feature) {
-        Set<Profile.Feature> disabledFeatures = testing().enableFeature(feature.toString());
-        Assert.assertFalse(disabledFeatures.contains(feature));
-        ProfileAssume.updateDisabledFeatures(disabledFeatures);
+        try (Response response = testing().enableFeature(feature.toString())) {
+            assertEquals(204, response.getStatus());
+        }
     }
 
     public void disableFeature(Profile.Feature feature) {
-        Set<Profile.Feature> disabledFeatures = testing().disableFeature(feature.toString());
-        Assert.assertTrue(disabledFeatures.contains(feature));
-        ProfileAssume.updateDisabledFeatures(disabledFeatures);
+        try (Response response = testing().disableFeature(feature.toString())) {
+            assertEquals(204, response.getStatus());
+        }
     }
 
     public TestApplicationResource testApp() { return target.proxy(TestApplicationResource.class); }

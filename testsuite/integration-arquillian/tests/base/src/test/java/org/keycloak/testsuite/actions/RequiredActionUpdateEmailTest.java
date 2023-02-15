@@ -19,6 +19,7 @@ package org.keycloak.testsuite.actions;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
+import org.junit.Assert;
 import org.junit.Test;
 import org.keycloak.events.Details;
 import org.keycloak.events.EventType;
@@ -28,30 +29,25 @@ import org.keycloak.testsuite.pages.AppPage;
 
 public class RequiredActionUpdateEmailTest extends AbstractRequiredActionUpdateEmailTest {
 
-    @Override
-    protected void changeEmailUsingRequiredAction(String newEmail) {
+    @Test
+    public void updateEmail() {
         loginPage.open();
 
         loginPage.login("test-user@localhost", "password");
 
         updateEmailPage.assertCurrent();
 
-        updateEmailPage.changeEmail(newEmail);
-    }
-
-    @Test
-    public void updateEmail() {
-        changeEmailUsingRequiredAction("new@localhost");
+        updateEmailPage.changeEmail("new-email@localhost");
 
         events.expectRequiredAction(EventType.UPDATE_EMAIL).detail(Details.PREVIOUS_EMAIL, "test-user@localhost")
-                .detail(Details.UPDATED_EMAIL, "new@localhost").assertEvent();
+                .detail(Details.UPDATED_EMAIL, "new-email@localhost").assertEvent();
         assertEquals(AppPage.RequestType.AUTH_RESPONSE, appPage.getRequestType());
 
         events.expectLogin().assertEvent();
 
         // assert user is really updated in persistent store
         UserRepresentation user = ActionUtil.findUserWithAdminClient(adminClient, "test-user@localhost");
-        assertEquals("new@localhost", user.getEmail());
+        assertEquals("new-email@localhost", user.getEmail());
         assertEquals("Tom", user.getFirstName());
         assertEquals("Brady", user.getLastName());
         assertFalse(user.getRequiredActions().contains(UserModel.RequiredAction.UPDATE_EMAIL.name()));

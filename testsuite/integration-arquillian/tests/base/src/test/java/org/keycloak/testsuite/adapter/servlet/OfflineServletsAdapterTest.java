@@ -93,11 +93,6 @@ public class OfflineServletsAdapterTest extends AbstractServletsAdapterTest {
         testRealms.add(IOUtil.loadRealm("/adapter-test/offline-client/offlinerealm.json"));
     }
 
-    @Override
-    protected boolean isImportAfterEachMethod() {
-        return false;
-    }
-
     @Test
     public void testServlet() {
         try {

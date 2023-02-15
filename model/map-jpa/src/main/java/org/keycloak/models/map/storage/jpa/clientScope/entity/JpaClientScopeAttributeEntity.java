@@ -20,13 +20,13 @@ import javax.persistence.Entity;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
-import org.keycloak.models.map.storage.jpa.JpaAttributeEntityWithHashValue;
+import org.keycloak.models.map.storage.jpa.JpaAttributeEntity;
 
 @Entity
 @Table(name = "kc_client_scope_attribute", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"fk_root", "name", "value_hash"})
+        @UniqueConstraint(columnNames = {"fk_root", "name", "value"})
 })
-public class JpaClientScopeAttributeEntity extends JpaAttributeEntityWithHashValue<JpaClientScopeEntity> {
+public class JpaClientScopeAttributeEntity extends JpaAttributeEntity<JpaClientScopeEntity> {
 
     public JpaClientScopeAttributeEntity() {
     }

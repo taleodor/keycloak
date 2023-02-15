@@ -17,7 +17,6 @@
 
 package org.keycloak.models.map.realm;
 
-import org.keycloak.models.map.common.DeepCloner;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -40,7 +39,7 @@ import static org.hamcrest.Matchers.hasKey;
 public class RealmEntityUndefinedValuesTest {
 
     public MapRealmEntity newMapRealmEntity() {
-        return DeepCloner.DUMB_CLONER.newInstance(MapRealmEntity.class);
+        return new MapRealmEntityImpl();
     }
 
     @Test

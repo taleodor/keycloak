@@ -70,7 +70,6 @@ import org.keycloak.testsuite.ProfileAssume;
 import org.keycloak.testsuite.admin.ApiUtil;
 import org.keycloak.testsuite.arquillian.annotation.DisableFeature;
 import org.keycloak.testsuite.pages.AppPage;
-import org.keycloak.testsuite.util.AccountHelper;
 import org.keycloak.testsuite.util.LDAPRule;
 import org.keycloak.testsuite.util.LDAPTestUtils;
 import org.keycloak.testsuite.util.OAuthClient;
@@ -485,7 +484,13 @@ public class LDAPProvidersIntegrationTest extends AbstractLDAPTest {
     @Test
     @DisableFeature(value = Profile.Feature.ACCOUNT2, skipRestart = true) // TODO remove this (KEYCLOAK-16228)
     public void ldapPasswordChangeWithAccountConsole() throws Exception {
-        Assert.assertTrue(AccountHelper.updatePassword(testRealm(), "johnkeycloak", "New-password1"));
+        changePasswordPage.open();
+        loginPage.login("johnkeycloak", "Password1");
+        changePasswordPage.changePassword("Password1", "New-password1", "New-password1");
+
+        Assert.assertEquals("Your password has been updated.", profilePage.getSuccess());
+
+        changePasswordPage.logout();
 
         loginPage.open();
         loginPage.login("johnkeycloak", "Bad-password1");
@@ -496,7 +501,9 @@ public class LDAPProvidersIntegrationTest extends AbstractLDAPTest {
         Assert.assertEquals(AppPage.RequestType.AUTH_RESPONSE, appPage.getRequestType());
 
         // Change password back to previous value
-        Assert.assertTrue(AccountHelper.updatePassword(testRealm(), "johnkeycloak", "Password1"));
+        changePasswordPage.open();
+        changePasswordPage.changePassword("New-password1", "Password1", "Password1");
+        Assert.assertEquals("Your password has been updated.", profilePage.getSuccess());
     }
 
 

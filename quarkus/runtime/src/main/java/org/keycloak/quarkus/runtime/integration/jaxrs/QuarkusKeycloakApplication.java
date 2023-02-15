@@ -21,8 +21,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.ws.rs.ApplicationPath;
-
-import org.keycloak.models.KeycloakSessionFactory;
+import org.keycloak.exportimport.ExportImportManager;
+import org.keycloak.models.utils.PostMigrationEvent;
 import org.keycloak.quarkus.runtime.integration.QuarkusKeycloakSessionFactory;
 import org.keycloak.services.resources.KeycloakApplication;
 import org.keycloak.quarkus.runtime.services.resources.QuarkusWelcomeResource;
@@ -36,10 +36,17 @@ public class QuarkusKeycloakApplication extends KeycloakApplication {
     }
 
     @Override
-    public KeycloakSessionFactory createSessionFactory() {
+    protected void startup() {
         QuarkusKeycloakSessionFactory instance = QuarkusKeycloakSessionFactory.getInstance();
+        sessionFactory = instance;
         instance.init();
-        return instance;
+        ExportImportManager exportImportManager = bootstrap();
+
+        if (exportImportManager.isRunExport()) {
+            exportImportManager.runExport();
+        }
+
+        sessionFactory.publish(new PostMigrationEvent(sessionFactory));
     }
 
     @Override

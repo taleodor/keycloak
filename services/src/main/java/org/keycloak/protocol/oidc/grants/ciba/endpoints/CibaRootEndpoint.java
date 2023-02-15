@@ -19,6 +19,7 @@ package org.keycloak.protocol.oidc.grants.ciba.endpoints;
 
 import javax.ws.rs.Path;
 
+import org.jboss.resteasy.spi.ResteasyProviderFactory;
 import org.keycloak.common.Profile;
 import org.keycloak.events.EventBuilder;
 import org.keycloak.models.KeycloakSession;
@@ -52,7 +53,11 @@ public class CibaRootEndpoint implements OIDCExtProvider, OIDCExtProviderFactory
      */
     @Path("/auth")
     public BackchannelAuthenticationEndpoint authorize() {
-        return new BackchannelAuthenticationEndpoint(session, event);
+        BackchannelAuthenticationEndpoint endpoint = new BackchannelAuthenticationEndpoint(session, event);
+
+        ResteasyProviderFactory.getInstance().injectProperties(endpoint);
+
+        return endpoint;
     }
 
     /**
@@ -62,7 +67,11 @@ public class CibaRootEndpoint implements OIDCExtProvider, OIDCExtProviderFactory
      */
     @Path("/auth/callback")
     public BackchannelAuthenticationCallbackEndpoint authenticate() {
-        return new BackchannelAuthenticationCallbackEndpoint(session, event);
+        BackchannelAuthenticationCallbackEndpoint endpoint = new BackchannelAuthenticationCallbackEndpoint(session, event);
+
+        ResteasyProviderFactory.getInstance().injectProperties(endpoint);
+
+        return endpoint;
     }
 
     @Override

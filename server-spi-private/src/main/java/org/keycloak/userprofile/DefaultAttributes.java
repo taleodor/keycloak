@@ -295,7 +295,7 @@ public class DefaultAttributes extends HashMap<String, List<String>> implements 
             List<String> username = newAttributes.get(UserModel.USERNAME);
 
             if (username == null || username.isEmpty() || (!realm.isEditUsernameAllowed() && UserProfileContext.USER_API.equals(context))) {
-                setUserName(newAttributes, Collections.singletonList(user.getUsername()));
+                newAttributes.put(UserModel.USERNAME, Collections.singletonList(user.getUsername()));
             }
         }
 
@@ -307,17 +307,10 @@ public class DefaultAttributes extends HashMap<String, List<String>> implements 
                     .map(String::toLowerCase)
                     .collect(Collectors.toList());
 
-            setUserName(newAttributes, lowerCaseEmailList);
+            newAttributes.put(UserModel.USERNAME, lowerCaseEmailList);
         }
 
         return newAttributes;
-    }
-
-    private void setUserName(Map<String, List<String>> newAttributes, List<String> lowerCaseEmailList) {
-        if (user != null && user.getServiceAccountClientLink() != null) {
-            return;
-        }
-        newAttributes.put(UserModel.USERNAME, lowerCaseEmailList);
     }
 
     protected boolean isIncludeAttributeIfNotProvided(AttributeMetadata metadata) {
@@ -348,10 +341,6 @@ public class DefaultAttributes extends HashMap<String, List<String>> implements 
         }
 
         if (isReadOnly(name)) {
-            return true;
-        }
-
-        if (user != null && user.getServiceAccountClientLink() != null) {
             return true;
         }
 

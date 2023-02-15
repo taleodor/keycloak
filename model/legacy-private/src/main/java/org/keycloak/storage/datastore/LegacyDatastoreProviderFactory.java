@@ -98,7 +98,8 @@ public class LegacyDatastoreProviderFactory implements DatastoreProviderFactory,
     public static void setupScheduledTasks(final KeycloakSessionFactory sessionFactory) {
         long interval = Config.scope("scheduled").getLong("interval", 900L) * 1000;
 
-        try (KeycloakSession session = sessionFactory.create()) {
+        KeycloakSession session = sessionFactory.create();
+        try {
             TimerProvider timer = session.getProvider(TimerProvider.class);
             if (timer != null) {
                 timer.schedule(new ClusterAwareScheduledTaskRunner(sessionFactory, new ClearExpiredEvents(), interval), interval, "ClearExpiredEvents");
@@ -107,6 +108,8 @@ public class LegacyDatastoreProviderFactory implements DatastoreProviderFactory,
                 timer.schedule(new ScheduledTaskRunner(sessionFactory, new ClearExpiredUserSessions()), interval, ClearExpiredUserSessions.TASK_NAME);
                 UserStorageSyncManager.bootstrapPeriodic(sessionFactory, timer);
             }
+        } finally {
+            session.close();
         }
     }
 

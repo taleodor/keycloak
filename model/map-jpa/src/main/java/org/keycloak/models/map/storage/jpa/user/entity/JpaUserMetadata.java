@@ -29,7 +29,7 @@ import org.keycloak.models.map.user.MapUserEntityImpl;
 public class JpaUserMetadata extends MapUserEntityImpl implements Serializable {
 
     public JpaUserMetadata() {
-        super(DeepCloner.DUMB_CLONER);
+        super();
     }
 
     public JpaUserMetadata(final DeepCloner cloner) {

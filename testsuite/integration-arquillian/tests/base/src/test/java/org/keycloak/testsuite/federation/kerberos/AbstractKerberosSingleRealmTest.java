@@ -27,7 +27,6 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 
 import org.ietf.jgss.GSSCredential;
-import org.jboss.arquillian.graphene.page.Page;
 import org.junit.Assume;
 import org.junit.Test;
 import org.keycloak.admin.client.resource.ClientResource;
@@ -47,10 +46,6 @@ import org.keycloak.testsuite.ActionURIUtils;
 import org.keycloak.testsuite.Assert;
 import org.keycloak.testsuite.admin.ApiUtil;
 import org.keycloak.testsuite.arquillian.annotation.DisableFeature;
-import org.keycloak.testsuite.pages.AppPage;
-import org.keycloak.testsuite.pages.LoginPage;
-import org.keycloak.testsuite.util.AccountHelper;
-import org.keycloak.testsuite.util.TestAppHelper;
 
 import static org.keycloak.testsuite.admin.ApiUtil.findClientByClientId;
 
@@ -61,9 +56,6 @@ import static org.keycloak.testsuite.admin.ApiUtil.findClientByClientId;
  */
 @DisableFeature(value = Profile.Feature.ACCOUNT2, skipRestart = true) // TODO remove this (KEYCLOAK-16228)
 public abstract class AbstractKerberosSingleRealmTest extends AbstractKerberosTest {
-
-    @Page
-    protected AppPage appPage;
 
     @Test
     public void spnegoNotAvailableTest() throws Exception {
@@ -139,27 +131,35 @@ public abstract class AbstractKerberosSingleRealmTest extends AbstractKerberosTe
         // Change editMode to READ_ONLY
         updateProviderEditMode(UserStorageProvider.EditMode.READ_ONLY);
 
-        TestAppHelper testAppHelper = new TestAppHelper(oauth, loginPage, appPage);
+        // Login with username/password from kerberos
+        changePasswordPage.open();
+        loginPage.assertCurrent();
+        loginPage.login("jduke", "theduke");
+        changePasswordPage.assertCurrent();
 
-        Assert.assertTrue(testAppHelper.login("jduke", "theduke"));
-        Assert.assertTrue(testAppHelper.logout());
+        // Bad existing password
+        changePasswordPage.changePassword("theduke-invalid", "newPass", "newPass");
+        Assert.assertTrue(driver.getPageSource().contains("Invalid existing password."));
 
         // Change password is not possible as editMode is READ_ONLY
-        Assert.assertFalse(AccountHelper.updatePassword(testRealmResource(), "jduke", "newPass"));
-
-        Assert.assertFalse(testAppHelper.login("jduke", "newPass"));
+        changePasswordPage.changePassword("theduke", "newPass", "newPass");
+        Assert.assertTrue(
+                driver.getPageSource().contains("You can't update your password as your account is read-only"));
 
         // Change editMode to UNSYNCED
         updateProviderEditMode(UserStorageProvider.EditMode.UNSYNCED);
 
         // Successfully change password now
-        Assert.assertTrue(AccountHelper.updatePassword(testRealmResource(), "jduke", "newPass"));
+        changePasswordPage.changePassword("theduke", "newPass", "newPass");
+        Assert.assertTrue(driver.getPageSource().contains("Your password has been updated."));
+        changePasswordPage.logout();
 
         // Login with old password doesn't work, but with new password works
-        Assert.assertFalse(testAppHelper.login("jduke", "theduke"));
-        Assert.assertTrue(testAppHelper.login("jduke", "newPass"));
-
-        testAppHelper.logout();
+        loginPage.login("jduke", "theduke");
+        loginPage.assertCurrent();
+        loginPage.login("jduke", "newPass");
+        changePasswordPage.assertCurrent();
+        changePasswordPage.logout();
 
         // Assert SPNEGO login still with the old password as mode is unsynced
         events.clear();

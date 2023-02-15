@@ -20,12 +20,10 @@ package org.keycloak.authentication.authenticators.browser;
 import org.keycloak.Config;
 import org.keycloak.authentication.Authenticator;
 import org.keycloak.authentication.AuthenticatorFactory;
-import org.keycloak.common.Profile;
 import org.keycloak.models.AuthenticationExecutionModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.models.UserCredentialModel;
-import org.keycloak.provider.EnvironmentDependentProviderFactory;
 import org.keycloak.provider.ProviderConfigProperty;
 
 import java.util.List;
@@ -34,7 +32,7 @@ import java.util.List;
  * @author <a href="mailto:bill@burkecentral.com">Bill Burke</a>
  * @version $Revision: 1 $
  */
-public class SpnegoAuthenticatorFactory implements AuthenticatorFactory, EnvironmentDependentProviderFactory {
+public class SpnegoAuthenticatorFactory implements AuthenticatorFactory {
 
     public static final String PROVIDER_ID = "auth-spnego";
     public static final SpnegoAuthenticator SINGLETON = new SpnegoAuthenticator();
@@ -100,8 +98,4 @@ public class SpnegoAuthenticatorFactory implements AuthenticatorFactory, Environ
         return false;
     }
 
-    @Override
-    public boolean isSupported() {
-        return Profile.isFeatureEnabled(Profile.Feature.KERBEROS);
-    }
 }

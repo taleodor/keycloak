@@ -13,7 +13,6 @@ import java.io.InputStream;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Scanner;
 
 import org.junit.BeforeClass;
@@ -87,8 +86,7 @@ public class AssertionUtilTest {
             assertNotNull(subType.getEncryptedID());
             assertNull(subType.getBaseID());
 
-            PrivateKey pk = extractPrivateKey();
-            AssertionUtil.decryptId(responseType, data -> Collections.singletonList(pk));
+            AssertionUtil.decryptId(responseType, extractPrivateKey());
 
             assertNull(subType.getEncryptedID());
             assertNotNull(subType.getBaseID());

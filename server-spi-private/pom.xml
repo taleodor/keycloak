@@ -21,7 +21,7 @@
     <parent>
         <artifactId>keycloak-parent</artifactId>
         <groupId>org.keycloak</groupId>
-        <version>999-SNAPSHOT</version>
+        <version>20.0.3</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -92,8 +92,7 @@
                         <exclude/>
                     </excludes>
                     <!-- Surefire misses to pass on correct encoding to forked JVM, even though encoding is set correct. -->
-                    <!-- https://issues.apache.org/jira/browse/SUREFIRE-951 -->
-                    <argLine>-Dfile.encoding=UTF-8 -XX:+ExitOnOutOfMemoryError -XX:+HeapDumpOnOutOfMemoryError</argLine>
+                    <argLine>-Dfile.encoding=UTF-8</argLine>
                 </configuration>
             </plugin>
         </plugins>

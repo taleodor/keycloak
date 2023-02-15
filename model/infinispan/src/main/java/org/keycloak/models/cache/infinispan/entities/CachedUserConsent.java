@@ -32,7 +32,6 @@ public class CachedUserConsent {
     private final Set<String> clientScopeIds = new HashSet<>();
     private final Long createdDate;
     private final Long lastUpdatedDate;
-    private boolean notExistent;
 
     public CachedUserConsent(UserConsentModel consentModel) {
         this.clientDbId = consentModel.getClient().getId();
@@ -41,13 +40,6 @@ public class CachedUserConsent {
         }
         this.createdDate = consentModel.getCreatedDate();
         this.lastUpdatedDate = consentModel.getLastUpdatedDate();
-    }
-
-    public CachedUserConsent(String clientDbId) {
-        this.clientDbId = clientDbId;
-        this.createdDate = null;
-        this.lastUpdatedDate = null;
-        this.notExistent = true;
     }
 
     public String getClientDbId() {
@@ -64,9 +56,5 @@ public class CachedUserConsent {
 
     public Long getLastUpdatedDate() {
         return lastUpdatedDate;
-    }
-
-    public boolean isNotExistent() {
-        return notExistent;
     }
 }

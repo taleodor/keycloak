@@ -17,8 +17,6 @@
 
 package org.keycloak.models.map.storage.hotRod.authorization;
 
-import org.infinispan.api.annotations.indexing.Basic;
-import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.protostream.GeneratedSchema;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoDoc;
@@ -37,7 +35,7 @@ import org.keycloak.models.map.storage.hotRod.common.UpdatableHotRodEntityDelega
         modelClass = "org.keycloak.authorization.model.PermissionTicket",
         cacheName = "authz"
 )
-@Indexed
+@ProtoDoc("@Indexed")
 @ProtoDoc("schema-version: " + HotRodPermissionTicketEntity.VERSION)
 public class HotRodPermissionTicketEntity extends AbstractHotRodEntity {
 
@@ -55,47 +53,47 @@ public class HotRodPermissionTicketEntity extends AbstractHotRodEntity {
     }
 
 
-    @Basic(projectable = true)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     @ProtoField(number = 1)
     public Integer entityVersion = VERSION;
 
-    @Basic(projectable = true, sortable = true)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     @ProtoField(number = 2)
     public String id;
 
-    @Basic(sortable = true)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     @ProtoField(number = 3)
     public String realmId;
 
-    @Basic(sortable = true)
     @ProtoField(number = 4)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     public String owner;
 
-    @Basic(sortable = true)
     @ProtoField(number = 5)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     public String requester;
 
     @ProtoField(number = 6)
     public Long createdTimestamp;
 
-    @Basic(sortable = true)
     @ProtoField(number = 7)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     public Long grantedTimestamp;
 
-    @Basic(sortable = true)
     @ProtoField(number = 8)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     public String resourceId;
 
-    @Basic(sortable = true)
     @ProtoField(number = 9)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     public String scopeId;
 
-    @Basic(sortable = true)
     @ProtoField(number = 10)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     public String resourceServerId;
 
-    @Basic(sortable = true)
     @ProtoField(number = 11)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.YES)")
     public String policyId;
 
     public static abstract class AbstractHotRodPermissionTicketEntity extends UpdatableHotRodEntityDelegateImpl<HotRodPermissionTicketEntity> implements MapPermissionTicketEntity {

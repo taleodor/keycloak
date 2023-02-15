@@ -26,8 +26,6 @@ import org.keycloak.provider.Spi;
  */
 public class RealmSpi implements Spi {
 
-    public static final String NAME = "realm";
-
     @Override
     public boolean isInternal() {
         return true;
@@ -35,7 +33,7 @@ public class RealmSpi implements Spi {
 
     @Override
     public String getName() {
-        return NAME;
+        return "realm";
     }
 
     @Override

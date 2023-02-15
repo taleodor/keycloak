@@ -21,7 +21,7 @@
     <parent>
         <artifactId>keycloak-client-cli-parent</artifactId>
         <groupId>org.keycloak</groupId>
-        <version>999-SNAPSHOT</version>
+        <version>20.0.3</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -37,6 +37,10 @@
         <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>${keycloak.crypto.artifactId}</artifactId>
         </dependency>
         <dependency>
             <groupId>org.jboss.logging</groupId>
@@ -57,6 +61,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
+                <!--version>2.4.3</version-->
                 <executions>
                     <execution>
                         <phase>package</phase>
@@ -89,6 +94,18 @@
                                         <include>org/keycloak/common/util/**</include>
                                         <include>org/keycloak/common/crypto/**</include>
                                     </includes>
+                                </filter>
+                                <filter>
+                                    <artifact>org.bouncycastle:bcprov-jdk15on</artifact>
+                                    <includes>
+                                        <include>**/**</include>
+                                    </includes>
+                                </filter>
+                                <filter>
+                                    <artifact>org.bouncycastle:bcpkix-jdk15on</artifact>
+                                    <excludes>
+                                        <exclude>**/**</exclude>
+                                    </excludes>
                                 </filter>
                                 <filter>
                                     <artifact>com.fasterxml.jackson.core:jackson-core</artifact>

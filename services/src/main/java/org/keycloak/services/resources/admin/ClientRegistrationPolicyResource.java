@@ -32,6 +32,7 @@ import org.keycloak.services.resources.admin.permissions.AdminPermissionEvaluato
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import java.util.List;
 import java.util.stream.Stream;
@@ -46,12 +47,12 @@ public class ClientRegistrationPolicyResource {
     private final RealmModel realm;
     private final AdminEventBuilder adminEvent;
 
-    protected final KeycloakSession session;
+    @Context
+    protected KeycloakSession session;
 
-    public ClientRegistrationPolicyResource(KeycloakSession session, AdminPermissionEvaluator auth, AdminEventBuilder adminEvent) {
-        this.session = session;
+    public ClientRegistrationPolicyResource(RealmModel realm, AdminPermissionEvaluator auth, AdminEventBuilder adminEvent) {
         this.auth = auth;
-        this.realm = session.getContext().getRealm();
+        this.realm = realm;
         this.adminEvent = adminEvent.resource(ResourceType.CLIENT_INITIAL_ACCESS_MODEL);
 
     }

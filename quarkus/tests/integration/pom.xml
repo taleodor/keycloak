@@ -24,7 +24,7 @@
     <parent>
         <artifactId>keycloak-quarkus-test-parent</artifactId>
         <groupId>org.keycloak</groupId>
-        <version>999-SNAPSHOT</version>
+        <version>20.0.3</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -63,12 +63,6 @@
             <artifactId>quarkus-junit5-internal</artifactId>
         </dependency>
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>${junit.version}</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-quarkus-dist</artifactId>
             <type>zip</type>
@@ -96,19 +90,11 @@
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
-            <artifactId>cockroachdb</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.testcontainers</groupId>
             <artifactId>mariadb</artifactId>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>mysql</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.maven.wagon</groupId>
-            <artifactId>wagon-http-shared</artifactId>
         </dependency>
     </dependencies>
 
@@ -118,7 +104,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
-                    <argLine>-Djdk.net.hosts.file=${project.build.testOutputDirectory}/hosts_file -XX:+ExitOnOutOfMemoryError -XX:+HeapDumpOnOutOfMemoryError</argLine>
+                    <argLine>-Djdk.net.hosts.file=${project.build.testOutputDirectory}/hosts_file</argLine>
                     <systemPropertyVariables>
                         <kc.quarkus.tests.dist>${kc.quarkus.tests.dist}</kc.quarkus.tests.dist>
                     </systemPropertyVariables>
@@ -172,7 +158,7 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
                         <configuration>
-                            <argLine>-Xmx1024m -XX:MaxMetaspaceSize=512m -XX:+ExitOnOutOfMemoryError -XX:+HeapDumpOnOutOfMemoryError</argLine>
+                            <argLine>-Xmx1024m -XX:MaxMetaspaceSize=512m</argLine>
                             <systemPropertyVariables>
                                 <kc.test.storage.database>true</kc.test.storage.database>
                                 <!--DB Container -->

@@ -44,23 +44,6 @@ This can be achieved by add the `auth-server-quarkus` profile when running the t
 Unlike the "development" setup described above, this requires re-build the whole distribution
 after doing any change in the code.
 
-### Running tests using an embedded server
-
-For test driven development, it is possible to run the Keycloak server deployed on real Quarkus server.
-This can be achieved by add the `auth-server-quarkus-embedded` profile when running the testsuite.
-
-    mvn -f testsuite/integration-arquillian/pom.xml -Pauth-server-quarkus-embedded clean install -Dtest=LoginTest
-
-After running this command, you should also be able to run tests from your IDE. For that, make sure you have the `auth-server-quarkus-embedded` profile enabled.
-
-When running in embedded mode, the `build` phase happens every time the server is started, and it is based on the same configuration used during a full-distribution test run(e.g.: `auth-server-quarkus` profile is active).
-
-There are a few limitations when running tests. The well-known limitations are:
-
-* FIPS tests not working
-* Deploying script providers not working. Probably any test deploying JAR files.
-* Re-starting the server during a test execution is taking too much metaspace. Need more investigation.
-
 ## Debugging - tips & tricks
 
 ### Arquillian debugging
@@ -98,9 +81,16 @@ Or slightly longer version (that allows you to specify debugging port as well as
 
 and you will be able to attach remote debugger to the test. Unfortunately server and adapter are running in different JVMs, so this won't help to debug those.
 
-### Auth server debugging
+### JBoss auth server debugging
 
-See below in the "Quarkus" section.
+When tests are run on JBoss based container (WildFly/EAP) there is possibility to attach a debugger, by default on localhost:5005.
+
+The server won't wait to attach the debugger. There are some properties what can change the default behaviour.
+
+    -Dauth.server.debug.port=$PORT
+    -Dauth.server.debug.suspend=y
+
+More info: http://javahowto.blogspot.cz/2010/09/java-agentlibjdwp-for-attaching.html
 
 ### JBoss app server debugging
 
@@ -221,6 +211,23 @@ The test is executed in same way as the "auto" DB migration test with the only d
 that you need to use property `migration.mode` with the value `manual` .
 
     -Dmigration.mode=manual
+
+## Old Admin Console UI tests
+The UI tests are real-life, UI focused integration tests. Hence they do not support the default HtmlUnit browser. Only the following real-life browsers are supported: Mozilla Firefox and Google Chrome. For details on how to run the tests with these browsers, please refer to [Different Browsers](#different-browsers) chapter.
+
+The UI tests are focused on the Admin Console. They are placed in the `old-admin-console` module and are disabled by default.
+
+The tests also use some constants placed in [test-constants.properties](tests/base/src/test/resources/test-constants.properties). A different file can be specified by `-Dtestsuite.constants=path/to/different-test-constants.properties`
+
+In case a custom `settings.xml` is used for Maven, you need to specify it also in `-Dkie.maven.settings.custom=path/to/settings.xml`.
+
+#### Execution example
+```
+mvn -f testsuite/integration-arquillian/tests/other/old-admin-console/pom.xml \
+    clean test \
+    -Dbrowser=firefox \
+    -Dfirefox_binary=/opt/firefox-45.1.1esr/firefox
+```
 
 ## Spring Boot adapter tests
 
@@ -465,6 +472,7 @@ This is temporary and database configuration should be more integrated with the 
 
 Activate the following profiles:
 
+* `quarkus`
 * `auth-server-cluster-quarkus`
 
 Then run any cluster test as usual.
@@ -780,14 +788,7 @@ Run tests using the `auth-server-quarkus` profile:
     
 Right now, the server runs in a separate process. To debug the server set `auth.server.debug` system property to `true`.
 
-To configure the debugger port, set the `auth.server.debug.port` system property with any valid port number. Default is `5005`.
-Note you can also set port for example to `*:5005` or `my-host:5005` to set the bind host.
-
-By default, quarkus server is started in the testsuite and you need to attach remote debugger to it during running. You can
-use `auth.server.debug.suspend=y` to "suspend" server startup when running testsuite, which means that server startup is blocked
-until debugger is attached.
-
-More info: http://javahowto.blogspot.cz/2010/09/java-agentlibjdwp-for-attaching.html
+To configure the debugger port, set the `auth.server.debug.port` system property with any valid port number. Default is `5005`. 
 
 ## Cookies testing
 In order to reproduce some specific cookies behaviour in browsers (like SameSite policies or 3rd party cookie blocking),
@@ -831,43 +832,20 @@ we rely on [nip.io](https://nip.io) for DNS switching, so tests will work everyw
 To run base testsuite with new storage run the following command (this will execute testsuite with ConcurrentHashMap storage):
 ```shell
 mvn clean install -f testsuite/integration-arquillian/tests/base \
-                  -Pauth-server-quarkus -Pmap-storage-chm
+                  -Pauth-server-quarkus -Pmap-storage
 ```
 
 ### Running tests with JPA Map storage
 
-By default, testing with the profile `map-storage-jpa-postgres` spawns a new Postgres container
-with each test execution. The default image used is `postgres:alpine`. To spawn a different
-version, use the system property `keycloak.map.storage.postgres.docker.image`.
-
-In a similar way the profile `map-storage-jpa-cockroach` spawns a new CockroachDB container
-with each test execution. It uses the official CockroachDB image in the version stated in the
-class `CockroachdbContainerTestEnricher`. To spawn a different
-version, use the system property `keycloak.map.storage.cockroachdb.docker.image`.
+Run PostgreSQL database:
+```shell
+podman run --name postgres -p 5432:5432 -e POSTGRES_PASSWORD=pass -e POSTGRES_USER=keycloak -e POSTGRES_DB=keycloak -d postgres:13.2
+```
 
 Execute tests:
 ```shell
 mvn clean install -f testsuite/integration-arquillian/tests/base \
-                  -Pmap-storage-jpa-postgres
-```
-
-It's also possible to configure tests to connect to an external database, it might be useful 
-for debugging purposes as the database is not removed after the testsuite run. On the other hand
-it'll require manual cleaning between two runs.
-
-PostgreSQL database can be started e.g. by following command:
-```shell
-podman run --name postgres -p 5432:5432 -e POSTGRES_PASSWORD=pass -e POSTGRES_USER=keycloak -e POSTGRES_DB=keycloak -d postgres:alpine
-```
-
-To run the tests without spawning the container for you, execute tests with the following command:
-```shell
-mvn clean install -f testsuite/integration-arquillian/tests/base \
-  -Pmap-storage-jpa-postgres \
-  -Dpostgres.start-container=false \
-  -Dkeycloak.map.storage.connectionsJpa.url=<jdbc_url> \
-  -Dkeycloak.map.storage.connectionsJpa.user=<user> \
-  -Dkeycloak.map.storage.connectionsJpa.password=<password>
+                  -Pmap-storage,map-storage-jpa
 ```
 
 ### Running tests with HotRod Map storage
@@ -876,7 +854,7 @@ By default, Base testsuite with `map-storage-hotrod` profile spawn a new Infinis
 with each test execution. To run the tests execute:
 ```shell
 mvn clean install -f testsuite/integration-arquillian/tests/base \
-                  -Pmap-storage-hotrod
+                  -Pmap-storage,map-storage-hotrod
 ```
 Note: For running Infinispan server we are using Testcontainer, see section 
 _Usage of Testcontainers_ for details on how to set up your container engine.
@@ -886,7 +864,7 @@ connect to an external instance of Infinispan. To do so, execute tests with
 the following command:
 ```shell
 mvn clean install -f testsuite/integration-arquillian/tests/base \
-                  -Pmap-storage-hotrod
+                  -Pmap-storage,map-storage-hotrod
                   -Dkeycloak.testsuite.start-hotrod-container=false \
                   -Dkeycloak.connectionsHotRod.host=<host> \
                   -Dkeycloak.connectionsHotRod.port=<port> \
@@ -966,18 +944,4 @@ there should be messages similar to those:
  BCFIPS version 1.000203 - class org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider, 
  BCJSSE version 1.001202 - class org.bouncycastle.jsse.provider.BouncyCastleJsseProvider,
 ]
-```
-
-### BCFIPS approved mode
-
-For running testsuite with server using BCFIPS approved mode, those additional properties should be added when running tests:
-```
--Dauth.server.fips.mode=strict \
--Dauth.server.supported.keystore.types=BCFKS \
--Dauth.server.keystore.type=bcfks \
--Dauth.server.supported.rsa.key.sizes=2048,4096
-```
-The log should contain `KeycloakFipsSecurityProvider` mentioning "Approved mode". Something like:
-```
-KC(BCFIPS version 1.000203 Approved Mode) version 1.0 - class org.keycloak.crypto.fips.KeycloakFipsSecurityProvider,
 ```

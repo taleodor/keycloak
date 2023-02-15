@@ -18,7 +18,9 @@
 package org.keycloak.keys.infinispan;
 
 import java.io.Serializable;
-import org.keycloak.crypto.PublicKeysWrapper;
+import java.util.Map;
+
+import org.keycloak.crypto.KeyWrapper;
 
 /**
  * @author <a href="mailto:mposolda@redhat.com">Marek Posolda</a>
@@ -27,9 +29,9 @@ public class PublicKeysEntry implements Serializable {
 
     private final int lastRequestTime;
 
-    private final PublicKeysWrapper currentKeys;
+    private final Map<String, KeyWrapper> currentKeys;
 
-    public PublicKeysEntry(int lastRequestTime, PublicKeysWrapper currentKeys) {
+    public PublicKeysEntry(int lastRequestTime, Map<String, KeyWrapper> currentKeys) {
         this.lastRequestTime = lastRequestTime;
         this.currentKeys = currentKeys;
     }
@@ -38,7 +40,7 @@ public class PublicKeysEntry implements Serializable {
         return lastRequestTime;
     }
 
-    public PublicKeysWrapper getCurrentKeys() {
+    public Map<String, KeyWrapper> getCurrentKeys() {
         return currentKeys;
     }
 }

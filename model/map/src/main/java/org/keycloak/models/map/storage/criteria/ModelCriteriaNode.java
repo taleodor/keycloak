@@ -67,13 +67,7 @@ public class ModelCriteriaNode<M> extends DefaultTreeNode<ModelCriteriaNode<M>> 
         },
         NOT {
             @Override public <M, C extends ModelCriteriaBuilder<M, C>> C apply(C mcb, ModelCriteriaNode<M> node) {
-                final ModelCriteriaNode<M> child = node.getChildren().iterator().next();
-                return child.isFalseNode()
-                  ? mcb.and((C[]) Array.newInstance(mcb.getClass(), 0))
-                  : (child.isTrueNode()
-                    ? mcb.or((C[]) Array.newInstance(mcb.getClass(), 0))
-                    : mcb.not(child.flashToModelCriteriaBuilder(mcb))
-                  );
+                return mcb.not(node.getChildren().iterator().next().flashToModelCriteriaBuilder(mcb));
             }
             @Override public String toString(ModelCriteriaNode<?> node) {
                 return "! " + node.getChildren().iterator().next().toString();
@@ -148,20 +142,16 @@ public class ModelCriteriaNode<M> extends DefaultTreeNode<ModelCriteriaNode<M>> 
         this.simpleOperatorArguments = null;
     }
 
+    private ModelCriteriaNode(ExtOperator nodeOperator, Operator simpleOperator, SearchableModelField<? super M> field, Object[] simpleOperatorArguments) {
+        super(Collections.emptyMap());
+        this.nodeOperator = nodeOperator;
+        this.simpleOperator = simpleOperator;
+        this.field = field;
+        this.simpleOperatorArguments = simpleOperatorArguments;
+    }
+
     public ExtOperator getNodeOperator() {
         return nodeOperator;
-    }
-
-    public Operator getSimpleOperator() {
-        return simpleOperator;
-    }
-
-    public SearchableModelField<? super M> getField() {
-        return field;
-    }
-
-    public Object[] getSimpleOperatorArguments() {
-        return simpleOperatorArguments;
     }
 
     public ModelCriteriaNode<M> cloneTree() {

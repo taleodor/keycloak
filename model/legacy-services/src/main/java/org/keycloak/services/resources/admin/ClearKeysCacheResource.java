@@ -28,17 +28,18 @@ import javax.ws.rs.core.Context;
 
 public class ClearKeysCacheResource {
 
-    protected final AdminPermissionEvaluator auth;
-    protected final RealmModel realm;
-    private final AdminEventBuilder adminEvent;
+    protected AdminPermissionEvaluator auth;
+    protected RealmModel realm;
+    private AdminEventBuilder adminEvent;
 
-    protected final KeycloakSession session;
+    @Context
+    protected KeycloakSession session;
 
-    public ClearKeysCacheResource(KeycloakSession session, AdminPermissionEvaluator auth, AdminEventBuilder adminEvent) {
-        this.session = session;
+    public ClearKeysCacheResource(KeycloakSession session, RealmModel realm, AdminPermissionEvaluator auth, AdminEventBuilder adminEvent) {
         this.auth = auth;
-        this.realm = session.getContext().getRealm();
+        this.realm = realm;
         this.adminEvent = adminEvent;
+        this.session = session;
     }
 
     /**

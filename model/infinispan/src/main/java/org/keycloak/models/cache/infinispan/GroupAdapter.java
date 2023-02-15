@@ -138,7 +138,6 @@ public class GroupAdapter implements GroupModel {
 
     @Override
     public Stream<String> getAttributeStream(String name) {
-        if (isUpdated()) return updated.getAttributeStream(name);
         List<String> values = cached.getAttributes(modelSupplier).get(name);
         if (values == null) return Stream.empty();
         return values.stream();
@@ -146,7 +145,6 @@ public class GroupAdapter implements GroupModel {
 
     @Override
     public Map<String, List<String>> getAttributes() {
-        if (isUpdated()) return updated.getAttributes();
         return cached.getAttributes(modelSupplier);
     }
 

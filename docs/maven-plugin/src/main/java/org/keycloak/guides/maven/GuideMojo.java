@@ -10,7 +10,7 @@ import org.codehaus.plexus.util.FileUtils;
 
 import java.io.File;
 
-@Mojo(name = "keycloak-guide", defaultPhase = LifecyclePhase.GENERATE_SOURCES, threadSafe = true)
+@Mojo(name = "keycloak-guide", defaultPhase = LifecyclePhase.GENERATE_SOURCES)
 public class GuideMojo extends AbstractMojo {
 
     @Parameter(property = "project.build.sourceDirectory")

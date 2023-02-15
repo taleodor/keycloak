@@ -22,7 +22,6 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import org.keycloak.models.ProtocolMapperModel;
-import org.keycloak.models.map.common.DeepCloner;
 
 public class MapProtocolMapperUtils {
 
@@ -39,7 +38,7 @@ public class MapProtocolMapperUtils {
     }
 
     public static MapProtocolMapperEntity fromModel(ProtocolMapperModel model) {
-        MapProtocolMapperEntity res = DeepCloner.DUMB_CLONER.newInstance(MapProtocolMapperEntity.class);
+        MapProtocolMapperEntity res = new MapProtocolMapperEntityImpl();
         res.setId(model.getId());
         res.setName(model.getName());
         res.setProtocolMapper(model.getProtocolMapper());

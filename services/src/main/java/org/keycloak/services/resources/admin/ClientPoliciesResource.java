@@ -22,13 +22,14 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.jboss.logging.Logger;
 import org.jboss.resteasy.annotations.cache.NoCache;
-import org.keycloak.http.HttpRequest;
-import org.keycloak.http.HttpResponse;
+import org.jboss.resteasy.spi.HttpRequest;
+import org.jboss.resteasy.spi.HttpResponse;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.representations.idm.ClientPoliciesRepresentation;
@@ -39,21 +40,21 @@ import org.keycloak.services.resources.admin.permissions.AdminPermissionEvaluato
 public class ClientPoliciesResource {
     protected static final Logger logger = Logger.getLogger(ClientPoliciesResource.class);
 
-    protected final HttpRequest request;
+    @Context
+    protected HttpRequest request;
 
-    protected final HttpResponse response;
+    @Context
+    protected HttpResponse response;
 
-    protected final KeycloakSession session;
+    @Context
+    protected KeycloakSession session;
 
-    protected final RealmModel realm;
-    private final AdminPermissionEvaluator auth;
+    protected RealmModel realm;
+    private AdminPermissionEvaluator auth;
 
-    public ClientPoliciesResource(KeycloakSession session, AdminPermissionEvaluator auth) {
-        this.session = session;
-        this.realm = session.getContext().getRealm();
+    public ClientPoliciesResource(RealmModel realm, AdminPermissionEvaluator auth) {
+        this.realm = realm;
         this.auth = auth;
-        this.request = session.getContext().getHttpRequest();
-        this.response = session.getContext().getHttpResponse();
     }
 
     @GET

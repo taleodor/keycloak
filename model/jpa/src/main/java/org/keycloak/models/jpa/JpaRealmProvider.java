@@ -441,12 +441,10 @@ public class JpaRealmProvider implements RealmProvider, ClientProvider, ClientSc
         if (toParent != null && group.getId().equals(toParent.getId())) {
             return;
         }
-
-        GroupModel previousParent = group.getParent();
-
         if (group.getParentId() != null) {
             group.getParent().removeChild(group);
         }
+        GroupModel previousParent = group.getParent();
         group.setParent(toParent);
         if (toParent != null) toParent.addChild(group);
         else session.groups().addTopLevelGroup(realm, group);
@@ -496,15 +494,10 @@ public class JpaRealmProvider implements RealmProvider, ClientProvider, ClientSc
     public Stream<GroupModel> getGroupsStream(RealmModel realm, Stream<String> ids, String search, Integer first, Integer max) {
         if (search == null || search.isEmpty()) return getGroupsStream(realm, ids, first, max);
 
-        List<String> idsList = ids.collect(Collectors.toList());
-        if (idsList.isEmpty()) {
-            return Stream.empty();
-        }
-
         TypedQuery<String> query = em.createNamedQuery("getGroupIdsByNameContainingFromIdList", String.class)
                 .setParameter("realm", realm.getId())
                 .setParameter("search", search)
-                .setParameter("ids", idsList);
+                .setParameter("ids", ids.collect(Collectors.toList()));
 
         return closing(paginateQuery(query, first, max).getResultStream())
                 .map(g -> session.groups().getGroupById(realm, g));
@@ -516,14 +509,9 @@ public class JpaRealmProvider implements RealmProvider, ClientProvider, ClientSc
             return getGroupsStream(realm, ids);
         }
 
-        List<String> idsList = ids.collect(Collectors.toList());
-        if (idsList.isEmpty()) {
-            return Stream.empty();
-        }
-
         TypedQuery<String> query = em.createNamedQuery("getGroupIdsFromIdList", String.class)
                 .setParameter("realm", realm.getId())
-                .setParameter("ids", idsList);
+                .setParameter("ids", ids.collect(Collectors.toList()));
 
 
         return closing(paginateQuery(query, first, max).getResultStream())

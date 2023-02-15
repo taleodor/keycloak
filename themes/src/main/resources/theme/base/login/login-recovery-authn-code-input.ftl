@@ -1,5 +1,5 @@
 <#import "template.ftl" as layout>
-<@layout.registrationLayout displayMessage=!messagesPerField.existsError('recoveryCodeInput'); section>
+<@layout.registrationLayout; section>
 
     <#if section = "header">
         ${msg("auth-recovery-code-header")}
@@ -11,19 +11,7 @@
                 </div>
 
                 <div class="${properties.kcInputWrapperClass!}">
-                    <input tabindex="1" id="recoveryCodeInput"
-                           name="recoveryCodeInput"
-                           aria-invalid="<#if messagesPerField.existsError('recoveryCodeInput')>true</#if>"
-                           autocomplete="off"
-                           type="text"
-                           class="${properties.kcInputClass!}"
-                           autofocus/>
-
-                    <#if messagesPerField.existsError('recoveryCodeInput')>
-                        <span id="input-error" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
-                            ${kcSanitize(messagesPerField.get('recoveryCodeInput'))?no_esc}
-                        </span>
-                    </#if>
+                    <input id="recoveryCodeInput" name="recoveryCodeInput" autocomplete="off" type="text" class="${properties.kcInputClass!}" autofocus/>
                 </div>
             </div>
 

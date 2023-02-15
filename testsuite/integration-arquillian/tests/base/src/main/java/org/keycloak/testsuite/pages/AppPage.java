@@ -61,6 +61,4 @@ public class AppPage extends AbstractPage {
         oauth.idTokenHint(idTokenHint).openLogout();
     }
 
-
-
 }

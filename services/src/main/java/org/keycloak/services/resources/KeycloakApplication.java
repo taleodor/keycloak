@@ -22,9 +22,9 @@ import org.keycloak.Config;
 import org.keycloak.common.Profile;
 import org.keycloak.common.crypto.CryptoIntegration;
 import org.keycloak.common.util.Resteasy;
+import org.keycloak.common.util.StringPropertyReplacer;
 import org.keycloak.config.ConfigProviderFactory;
 import org.keycloak.exportimport.ExportImportManager;
-import org.keycloak.exportimport.Strategy;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.models.KeycloakSessionTask;
@@ -32,7 +32,8 @@ import org.keycloak.models.ModelDuplicateException;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.models.UserProvider;
-import org.keycloak.models.locking.GlobalLockProvider;
+import org.keycloak.models.dblock.DBLockManager;
+import org.keycloak.models.dblock.DBLockProvider;
 import org.keycloak.models.utils.KeycloakModelUtils;
 import org.keycloak.models.utils.PostMigrationEvent;
 import org.keycloak.models.utils.RepresentationToModel;
@@ -59,11 +60,16 @@ import javax.ws.rs.core.Application;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -81,7 +87,7 @@ public class KeycloakApplication extends Application {
     protected Set<Object> singletons = new HashSet<>();
     protected Set<Class<?>> classes = new HashSet<>();
 
-    private static KeycloakSessionFactory sessionFactory;
+    protected static KeycloakSessionFactory sessionFactory;
 
     public KeycloakApplication() {
 
@@ -125,24 +131,18 @@ public class KeycloakApplication extends Application {
 
         ExportImportManager[] exportImportManager = new ExportImportManager[1];
 
-        // Release all locks acquired by currently used GlobalLockProvider if keycloak.globalLock.forceUnlock is equal
-        //   to true. This can be used to recover from a state where there are some stale locks that were not correctly
-        //   unlocked
-        if (Boolean.getBoolean("keycloak.globalLock.forceUnlock")) {
-            KeycloakModelUtils.runJobInTransaction(sessionFactory, new KeycloakSessionTask() {
-                @Override
-                public void run(KeycloakSession session) {
-                    GlobalLockProvider locks = session.getProvider(GlobalLockProvider.class);
-                    locks.forceReleaseAllLocks();
-                }
-            });
-        }
-
         KeycloakModelUtils.runJobInTransaction(sessionFactory, new KeycloakSessionTask() {
             @Override
             public void run(KeycloakSession session) {
-                GlobalLockProvider locks = session.getProvider(GlobalLockProvider.class);
-                exportImportManager[0] = locks.withLock(GlobalLockProvider.Constants.KEYCLOAK_BOOT, innerSession -> bootstrap());
+                DBLockManager dbLockManager = new DBLockManager(session);
+                dbLockManager.checkForcedUnlock();
+                DBLockProvider dbLock = dbLockManager.getDBLock();
+                dbLock.waitForLock(DBLockProvider.Namespace.KEYCLOAK_BOOT);
+                try {
+                    exportImportManager[0] = bootstrap();
+                } finally {
+                    dbLock.releaseLock();
+                }
             }
         });
 
@@ -210,7 +210,7 @@ public class KeycloakApplication extends Application {
         if (exportImportManager[0].isRunImport()) {
             exportImportManager[0].runImport();
         } else {
-            importRealms(exportImportManager[0]);
+            importRealms();
         }
 
         importAddUser();
@@ -232,7 +232,7 @@ public class KeycloakApplication extends Application {
 
     }
 
-    protected KeycloakSessionFactory createSessionFactory() {
+    public static KeycloakSessionFactory createSessionFactory() {
         DefaultKeycloakSessionFactory factory = new DefaultKeycloakSessionFactory();
         factory.init();
         return factory;
@@ -252,20 +252,40 @@ public class KeycloakApplication extends Application {
         return singletons;
     }
 
-    public void importRealms(ExportImportManager exportImportManager) {
-        String dir = System.getProperty("keycloak.import");
-        if (dir != null) {
-            try {
-                exportImportManager.runImportAtStartup(dir, Strategy.IGNORE_EXISTING);
-            } catch (IOException cause) {
-                throw new RuntimeException("Failed to import realms", cause);
+    public void importRealms() {
+        String files = System.getProperty("keycloak.import");
+        if (files != null) {
+            StringTokenizer tokenizer = new StringTokenizer(files, ",");
+            while (tokenizer.hasMoreTokens()) {
+                String file = tokenizer.nextToken().trim();
+                RealmRepresentation rep;
+                try {
+                    Path filePath = Paths.get(file);
+
+                    if (!(Files.exists(filePath) && Files.isRegularFile(filePath) && filePath.toString().endsWith(".json"))) {
+                        logger.debugf("Ignoring import file because it is not a valid file: %s", file);
+                        continue;
+                    }
+
+                    rep = JsonSerialization.readValue(StringPropertyReplacer.replaceProperties(
+                            new String(Files.readAllBytes(filePath), "UTF-8"), new StringPropertyReplacer.PropertyResolver() {
+                                @Override
+                                public String resolve(String property) {
+                                    return Optional.ofNullable(System.getenv(property)).orElse(null);
+                                }
+                            }), RealmRepresentation.class);
+                } catch (Exception cause) {
+                    throw new RuntimeException("Failed to parse realm configuration file: " + file, cause);
+                }
+                importRealm(rep, "file " + file);
             }
         }
     }
 
     public void importRealm(RealmRepresentation rep, String from) {
+        KeycloakSession session = sessionFactory.create();
         boolean exists = false;
-        try (KeycloakSession session = sessionFactory.create()) {
+        try {
             session.getTransactionManager().begin();
 
             try {
@@ -284,14 +304,15 @@ public class KeycloakApplication extends Application {
                     RealmModel realm = manager.importRealm(rep);
                     ServicesLogger.LOGGER.importedRealm(realm.getName(), from);
                 }
+                session.getTransactionManager().commit();
             } catch (Throwable t) {
-                session.getTransactionManager().setRollbackOnly();
-                throw t;
+                session.getTransactionManager().rollback();
+                if (!exists) {
+                    ServicesLogger.LOGGER.unableToImportRealm(t, rep.getRealm(), from);
+                }
             }
-        } catch (Throwable t) {
-            if (!exists) {
-                ServicesLogger.LOGGER.unableToImportRealm(t, rep.getRealm(), from);
-            }
+        } finally {
+            session.close();
         }
     }
 
@@ -313,30 +334,37 @@ public class KeycloakApplication extends Application {
 
                 for (RealmRepresentation realmRep : realms) {
                     for (UserRepresentation userRep : realmRep.getUsers()) {
+                        KeycloakSession session = sessionFactory.create();
+
                         try {
-                            KeycloakModelUtils.runJobInTransaction(sessionFactory, session -> {
-                                RealmModel realm = session.realms().getRealmByName(realmRep.getRealm());
+                            session.getTransactionManager().begin();
+                            RealmModel realm = session.realms().getRealmByName(realmRep.getRealm());
 
-                                if (realm == null) {
-                                    ServicesLogger.LOGGER.addUserFailedRealmNotFound(userRep.getUsername(), realmRep.getRealm());
-                                }
+                            if (realm == null) {
+                                ServicesLogger.LOGGER.addUserFailedRealmNotFound(userRep.getUsername(), realmRep.getRealm());
+                            }
 
-                                UserProvider users = session.users();
+                            UserProvider users = session.users();
 
-                                if (users.getUserByUsername(realm, userRep.getUsername()) != null) {
-                                    ServicesLogger.LOGGER.notCreatingExistingUser(userRep.getUsername());
-                                } else {
-                                    UserModel user = users.addUser(realm, userRep.getUsername());
-                                    user.setEnabled(userRep.isEnabled());
-                                    RepresentationToModel.createCredentials(userRep, session, realm, user, false);
-                                    RepresentationToModel.createRoleMappings(userRep, user, realm);
-                                    ServicesLogger.LOGGER.addUserSuccess(userRep.getUsername(), realmRep.getRealm());
-                                }
-                            });
+                            if (users.getUserByUsername(realm, userRep.getUsername()) != null) {
+                                ServicesLogger.LOGGER.notCreatingExistingUser(userRep.getUsername());
+                            } else {
+                                UserModel user = users.addUser(realm, userRep.getUsername());
+                                user.setEnabled(userRep.isEnabled());
+                                RepresentationToModel.createCredentials(userRep, session, realm, user, false);
+                                RepresentationToModel.createRoleMappings(userRep, user, realm);
+                                ServicesLogger.LOGGER.addUserSuccess(userRep.getUsername(), realmRep.getRealm());
+                            }
+
+                            session.getTransactionManager().commit();
                         } catch (ModelDuplicateException e) {
+                            session.getTransactionManager().rollback();
                             ServicesLogger.LOGGER.addUserFailedUserExists(userRep.getUsername(), realmRep.getRealm());
                         } catch (Throwable t) {
+                            session.getTransactionManager().rollback();
                             ServicesLogger.LOGGER.addUserFailed(t, userRep.getUsername(), realmRep.getRealm());
+                        } finally {
+                            session.close();
                         }
                     }
                 }

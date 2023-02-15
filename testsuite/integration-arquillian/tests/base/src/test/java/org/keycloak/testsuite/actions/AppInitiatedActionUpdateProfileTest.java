@@ -16,10 +16,6 @@
  */
 package org.keycloak.testsuite.actions;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.anyOf;
-import static org.hamcrest.Matchers.containsString;
-
 import org.hamcrest.Matchers;
 import org.jboss.arquillian.graphene.page.Page;
 import org.junit.Assert;
@@ -262,10 +258,7 @@ public class AppInitiatedActionUpdateProfileTest extends AbstractAppInitiatedAct
         Assert.assertEquals("New last", updateProfilePage.getLastName());
         Assert.assertEquals("", updateProfilePage.getEmail());
 
-        assertThat(updateProfilePage.getInputErrors().getEmailError(), anyOf(
-                containsString("Please specify email"),
-                containsString("Please specify this field")
-        ));
+        Assert.assertEquals("Please specify email.", updateProfilePage.getInputErrors().getEmailError());
 
         events.assertEmpty();
     }

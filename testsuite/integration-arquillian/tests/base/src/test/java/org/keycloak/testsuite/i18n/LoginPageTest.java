@@ -88,6 +88,8 @@ public class LoginPageTest extends AbstractI18NTest {
 
     @Test
     public void languageDropdown() {
+        ProfileAssume.assumeCommunity();
+
         loginPage.open();
         Assert.assertEquals("English", loginPage.getLanguageDropdownText());
 
@@ -121,6 +123,8 @@ public class LoginPageTest extends AbstractI18NTest {
 
     @Test
     public void acceptLanguageHeader() throws IOException {
+        ProfileAssume.assumeCommunity();
+        
         try(CloseableHttpClient httpClient = (CloseableHttpClient) new HttpClientBuilder().build()) {
             ApacheHttpClient43Engine engine = new ApacheHttpClient43Engine(httpClient);
             ResteasyClient client = ((ResteasyClientBuilder) ResteasyClientBuilder.newBuilder()).httpEngine(engine).build();
@@ -152,6 +156,8 @@ public class LoginPageTest extends AbstractI18NTest {
     // KEYCLOAK-3887
     @Test
     public void languageChangeRequiredActions() {
+        ProfileAssume.assumeCommunity();
+
         UserResource user = ApiUtil.findUserByUsernameId(testRealm(), "test-user@localhost");
         UserRepresentation userRep = user.toRepresentation();
         userRep.setRequiredActions(Arrays.asList(UserModel.RequiredAction.UPDATE_PASSWORD.toString()));
@@ -177,6 +183,8 @@ public class LoginPageTest extends AbstractI18NTest {
     // KEYCLOAK-3887
     @Test
     public void languageChangeConsentScreen() {
+        ProfileAssume.assumeCommunity();
+
         // Set client, which requires consent
         oauth.clientId("third-party");
 
@@ -202,6 +210,8 @@ public class LoginPageTest extends AbstractI18NTest {
 
     @Test
     public void languageUserUpdates() {
+        ProfileAssume.assumeCommunity();
+
         loginPage.open();
         loginPage.openLanguage("Deutsch");
 

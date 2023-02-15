@@ -20,6 +20,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -35,21 +36,21 @@ import org.keycloak.userprofile.UserProfileProvider;
  */
 public class UserProfileResource {
 
-    protected final KeycloakSession session;
+    @Context
+    protected KeycloakSession session;
 
-    protected final RealmModel realm;
-    private final AdminPermissionEvaluator auth;
+    protected RealmModel realm;
+    private AdminPermissionEvaluator auth;
 
-    public UserProfileResource(KeycloakSession session, AdminPermissionEvaluator auth) {
-        this.session = session;
-        this.realm = session.getContext().getRealm();
+    public UserProfileResource(RealmModel realm, AdminPermissionEvaluator auth) {
+        this.realm = realm;
         this.auth = auth;
     }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public String getConfiguration() {
-        auth.requireAnyAdminRole();
+        auth.realm().requireViewRealm();
         return session.getProvider(UserProfileProvider.class).getConfiguration();
     }
 

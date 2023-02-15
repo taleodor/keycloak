@@ -20,6 +20,7 @@ import javax.ws.rs.core.Response.Status;
 import org.jboss.logging.Logger;
 import org.jboss.resteasy.annotations.cache.NoCache;
 import org.jboss.resteasy.spi.BadRequestException;
+import org.jboss.resteasy.spi.ResteasyProviderFactory;
 import org.keycloak.OAuthErrorException;
 import org.keycloak.authorization.admin.AuthorizationService;
 import org.keycloak.common.ClientConnection;
@@ -68,8 +69,10 @@ import org.keycloak.services.managers.ResourceAdminManager;
 import org.keycloak.services.resources.admin.permissions.AdminPermissionEvaluator;
 import org.keycloak.services.resources.admin.permissions.AdminPermissionManagement;
 import org.keycloak.services.resources.admin.permissions.AdminPermissions;
+import org.keycloak.utils.CredentialHelper;
 import org.keycloak.utils.ProfileHelper;
 import org.keycloak.utils.ReservedCharValidator;
+import org.keycloak.utils.StringUtil;
 import org.keycloak.validation.ValidationUtil;
 
 import javax.ws.rs.Consumes;
@@ -82,6 +85,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.HashMap;
@@ -105,9 +109,10 @@ public class ClientResource {
     private AdminPermissionEvaluator auth;
     private AdminEventBuilder adminEvent;
     protected ClientModel client;
-    protected final KeycloakSession session;
+    protected KeycloakSession session;
 
-    protected final ClientConnection clientConnection;
+    @Context
+    protected ClientConnection clientConnection;
 
     public ClientResource(RealmModel realm, AdminPermissionEvaluator auth, ClientModel clientModel, KeycloakSession session, AdminEventBuilder adminEvent) {
         this.realm = realm;
@@ -115,14 +120,15 @@ public class ClientResource {
         this.client = clientModel;
         this.session = session;
         this.adminEvent = adminEvent.resource(ResourceType.CLIENT);
-        this.clientConnection = session.getContext().getConnection();
     }
 
     @Path("protocol-mappers")
     public ProtocolMappersResource getProtocolMappers() {
         AdminPermissionEvaluator.RequirePermissionCheck manageCheck = () -> auth.clients().requireManage(client);
         AdminPermissionEvaluator.RequirePermissionCheck viewCheck = () -> auth.clients().requireView(client);
-        return new ProtocolMappersResource(session, client, auth, adminEvent, manageCheck, viewCheck);
+        ProtocolMappersResource mappers = new ProtocolMappersResource(realm, client, auth, adminEvent, manageCheck, viewCheck);
+        ResteasyProviderFactory.getInstance().injectProperties(mappers);
+        return mappers;
     }
 
     /**
@@ -198,7 +204,7 @@ public class ClientResource {
      */
     @Path("certificates/{attr}")
     public ClientAttributeCertificateResource getCertficateResource(@PathParam("attr") String attributePrefix) {
-        return new ClientAttributeCertificateResource(auth, client, session, attributePrefix, adminEvent);
+        return new ClientAttributeCertificateResource(realm, auth, client, session, attributePrefix, adminEvent);
     }
 
     @GET
@@ -635,7 +641,11 @@ public class ClientResource {
     public AuthorizationService authorization() {
         ProfileHelper.requireFeature(Profile.Feature.AUTHORIZATION);
 
-        return new AuthorizationService(this.session, this.client, this.auth, adminEvent);
+        AuthorizationService resource = new AuthorizationService(this.session, this.client, this.auth, adminEvent);
+
+        ResteasyProviderFactory.getInstance().injectProperties(resource);
+
+        return resource;
     }
 
     /**

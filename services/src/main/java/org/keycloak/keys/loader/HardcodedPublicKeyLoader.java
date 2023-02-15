@@ -19,14 +19,15 @@ package org.keycloak.keys.loader;
 import org.keycloak.common.util.Base64Url;
 import org.keycloak.common.util.KeyUtils;
 import org.keycloak.common.util.PemUtils;
+import org.keycloak.crypto.Algorithm;
 import org.keycloak.crypto.JavaAlgorithm;
 import org.keycloak.crypto.KeyType;
 import org.keycloak.crypto.KeyUse;
 import org.keycloak.crypto.KeyWrapper;
-import org.keycloak.crypto.PublicKeysWrapper;
 import org.keycloak.keys.PublicKeyLoader;
 
 import java.util.Collections;
+import java.util.Map;
 
 /**
  *
@@ -35,6 +36,10 @@ import java.util.Collections;
 public class HardcodedPublicKeyLoader implements PublicKeyLoader {
 
     private final KeyWrapper keyWrapper;
+
+    public HardcodedPublicKeyLoader(String kid, String pem) {
+        this(kid, pem, Algorithm.RS256);
+    }
 
     public HardcodedPublicKeyLoader(String kid, String encodedKey, String algorithm) {
         if (encodedKey != null && !encodedKey.trim().isEmpty()) {
@@ -58,10 +63,10 @@ public class HardcodedPublicKeyLoader implements PublicKeyLoader {
     }
 
     @Override
-    public PublicKeysWrapper loadKeys() throws Exception {
+    public Map<String, KeyWrapper> loadKeys() throws Exception {
         return keyWrapper != null
-                ? new PublicKeysWrapper(Collections.singletonList(getSavedPublicKey()))
-                : PublicKeysWrapper.EMPTY;
+                ? Collections.unmodifiableMap(Collections.singletonMap(keyWrapper.getKid(), getSavedPublicKey()))
+                : Collections.emptyMap();
     }
 
     protected KeyWrapper getSavedPublicKey() {

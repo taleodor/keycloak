@@ -24,6 +24,7 @@ import org.keycloak.services.ErrorResponseException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
 /**
@@ -31,12 +32,12 @@ import javax.ws.rs.core.Response;
  */
 public class ClientRegistrationService {
 
-    private final EventBuilder event;
+    private EventBuilder event;
 
-    private final KeycloakSession session;
+    @Context
+    private KeycloakSession session;
 
-    public ClientRegistrationService(KeycloakSession session, EventBuilder event) {
-        this.session = session;
+    public ClientRegistrationService(EventBuilder event) {
         this.event = event;
     }
 

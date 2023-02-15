@@ -12,11 +12,10 @@ public class HotRodStoreTestEnricher {
 
     public static final boolean HOT_ROD_START_CONTAINER = Boolean.parseBoolean(System.getProperty("keycloak.testsuite.start-hotrod-container", "false"));
 
-    private InfinispanContainer hotRodContainer;
+    private final InfinispanContainer hotRodContainer = new InfinispanContainer();
 
     public void beforeContainerStarted(@Observes(precedence = 1) StartSuiteContainers event) {
         if (!HOT_ROD_START_CONTAINER) return;
-        hotRodContainer = new InfinispanContainer();
         hotRodContainer.start();
 
         // Add env variable, so it can be picked up by Keycloak
@@ -25,6 +24,6 @@ public class HotRodStoreTestEnricher {
 
     public void afterSuite(@Observes(precedence = 4) AfterSuite event) {
         if (!HOT_ROD_START_CONTAINER) return;
-        if (hotRodContainer != null) hotRodContainer.stop();
+        hotRodContainer.stop();
     }
 }

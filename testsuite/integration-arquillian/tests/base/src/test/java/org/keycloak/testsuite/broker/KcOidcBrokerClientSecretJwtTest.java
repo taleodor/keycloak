@@ -1,5 +1,6 @@
 package org.keycloak.testsuite.broker;
 
+import static org.keycloak.testsuite.broker.BrokerTestConstants.CLIENT_SECRET;
 import static org.keycloak.testsuite.broker.BrokerTestConstants.IDP_OIDC_ALIAS;
 import static org.keycloak.testsuite.broker.BrokerTestConstants.IDP_OIDC_PROVIDER_ID;
 import static org.keycloak.testsuite.broker.BrokerTestTools.createIdentityProvider;
@@ -14,9 +15,6 @@ import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.idm.IdentityProviderRepresentation;
 
 public class KcOidcBrokerClientSecretJwtTest extends AbstractBrokerTest {
-
-    // BCFIPS approved mode requires at least 112 bits (14 characters) long SecretKey for "client-secret-jwt" authentication
-    private static final String CLIENT_SECRET = "atleast-14chars-password";
 
     @Override
     protected BrokerConfiguration getBrokerConfiguration() {
@@ -41,7 +39,6 @@ public class KcOidcBrokerClientSecretJwtTest extends AbstractBrokerTest {
             IdentityProviderRepresentation idp = createIdentityProvider(IDP_OIDC_ALIAS, IDP_OIDC_PROVIDER_ID);
             Map<String, String> config = idp.getConfig();
             applyDefaultConfiguration(config, syncMode);
-            config.put("clientSecret", CLIENT_SECRET);
             config.put("clientAuthMethod", OIDCLoginProtocol.CLIENT_SECRET_JWT);
             return idp;
         }

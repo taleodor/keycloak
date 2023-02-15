@@ -38,7 +38,7 @@ public interface MapUserConsentEntity extends UpdatableEntity {
     public static MapUserConsentEntity fromModel(UserConsentModel model) {
         long currentTime = Time.currentTimeMillis();
 
-        MapUserConsentEntity consentEntity = DeepCloner.DUMB_CLONER.newInstance(MapUserConsentEntity.class);
+        MapUserConsentEntity consentEntity = new MapUserConsentEntityImpl();
         consentEntity.setClientId(model.getClient().getId());
         consentEntity.setCreatedDate(currentTime);
         consentEntity.setLastUpdatedDate(currentTime);

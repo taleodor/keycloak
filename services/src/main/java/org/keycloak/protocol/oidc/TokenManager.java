@@ -19,7 +19,7 @@ package org.keycloak.protocol.oidc;
 
 import java.util.HashMap;
 import org.jboss.logging.Logger;
-import org.keycloak.http.HttpRequest;
+import org.jboss.resteasy.spi.HttpRequest;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.OAuthErrorException;
 import org.keycloak.TokenCategory;
@@ -356,10 +356,13 @@ public class TokenManager {
 
         // Fallback to lookup user based on username (preferred_username claim)
         if (token.getPreferredUsername() != null) {
-            return session.users().getUserByUsername(realm, token.getPreferredUsername());
+            user = session.users().getUserByUsername(realm, token.getPreferredUsername());
+            if (user != null) {
+                return user;
+            }
         }
 
-        return null;
+        return user;
     }
 
 

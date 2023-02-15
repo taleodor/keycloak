@@ -33,7 +33,7 @@ public class JpaAuthEventMetadata extends MapAuthEventEntityImpl implements Seri
     }
 
     public JpaAuthEventMetadata() {
-        super(DeepCloner.DUMB_CLONER);
+        super();
     }
 
     private Integer entityVersion;

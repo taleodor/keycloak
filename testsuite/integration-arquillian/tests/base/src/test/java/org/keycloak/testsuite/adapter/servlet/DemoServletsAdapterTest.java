@@ -879,6 +879,8 @@ public class DemoServletsAdapterTest extends AbstractServletsAdapterTest {
 
     @Test
     public void testOIDCUiLocalesParamForwarding() {
+        ProfileAssume.assumeCommunity();
+
         RealmRepresentation demoRealmRep = testRealmResource().toRepresentation();
         boolean enabled = demoRealmRep.isInternationalizationEnabled();
         String defaultLocale = demoRealmRep.getDefaultLocale();

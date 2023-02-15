@@ -23,7 +23,6 @@ import org.keycloak.models.SingleUseObjectValueModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.ModelDuplicateException;
 import org.keycloak.models.SingleUseObjectProvider;
-import org.keycloak.models.map.common.DeepCloner;
 import org.keycloak.models.map.common.TimeAdapter;
 import org.keycloak.models.map.storage.MapKeycloakTransaction;
 import org.keycloak.models.map.storage.MapStorage;
@@ -64,7 +63,7 @@ public class MapSingleUseObjectProvider implements SingleUseObjectProvider {
             throw new ModelDuplicateException("Single-use object entity exists: " + singleUseEntity.getObjectKey());
         }
 
-        singleUseEntity = DeepCloner.DUMB_CLONER.newInstance(MapSingleUseObjectEntity.class);
+        singleUseEntity = new MapSingleUseObjectEntityImpl();
         singleUseEntity.setObjectKey(key);
         singleUseEntity.setExpiration(Time.currentTimeMillis() + TimeAdapter.fromSecondsToMilliseconds(lifespanSeconds));
         singleUseEntity.setNotes(notes);
@@ -122,7 +121,7 @@ public class MapSingleUseObjectProvider implements SingleUseObjectProvider {
         if (singleUseEntity != null) {
             return false;
         } else {
-            singleUseEntity = DeepCloner.DUMB_CLONER.newInstance(MapSingleUseObjectEntity.class);
+            singleUseEntity = new MapSingleUseObjectEntityImpl();
             singleUseEntity.setObjectKey(key);
             singleUseEntity.setExpiration(Time.currentTimeMillis() + TimeAdapter.fromSecondsToMilliseconds(lifespanInSeconds));
 

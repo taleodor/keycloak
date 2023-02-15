@@ -2,7 +2,9 @@ package org.keycloak.quarkus.runtime.configuration.mappers;
 
 import org.keycloak.common.Profile;
 import org.keycloak.config.FeatureOptions;
+import org.keycloak.config.StorageOptions;
 import org.keycloak.quarkus.runtime.configuration.Configuration;
+import org.keycloak.quarkus.runtime.configuration.MicroProfileConfigProvider;
 
 import static java.util.Optional.of;
 import static org.keycloak.config.StorageOptions.STORAGE;
@@ -40,7 +42,7 @@ final class FeaturePropertyMappers {
 
         Set<String> featureSet = new HashSet<>(List.of(features.orElse("").split(",")));
 
-        featureSet.add(Profile.Feature.MAP_STORAGE.getKey());
+        featureSet.add(Profile.Feature.MAP_STORAGE.name().replace('_', '-'));
 
         return of(String.join(",", featureSet));
     }

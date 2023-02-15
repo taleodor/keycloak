@@ -26,6 +26,7 @@ import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 import org.jboss.arquillian.graphene.page.Page;
+import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.keycloak.events.Details;
@@ -58,35 +59,30 @@ public class RequiredActionUpdateEmailTestWithVerificationTest extends AbstractR
 		testRealm.setVerifyEmail(true);
 	}
 
-	@Override
-	protected void changeEmailUsingRequiredAction(String newEmail) throws Exception {
+	@Test
+	public void updateEmail() throws IOException, MessagingException {
 		loginPage.open();
 
 		loginPage.login("test-user@localhost", "password");
 
 		updateEmailPage.assertCurrent();
-		updateEmailPage.changeEmail(newEmail);
+		updateEmailPage.changeEmail("new@localhost");
 
-		events.expect(EventType.SEND_VERIFY_EMAIL).detail(Details.EMAIL, newEmail).assertEvent();
+		events.expect(EventType.SEND_VERIFY_EMAIL).detail(Details.EMAIL, "new@localhost").assertEvent();
 		UserRepresentation user = ActionUtil.findUserWithAdminClient(adminClient, "test-user@localhost");
 		assertEquals("test-user@localhost", user.getEmail());
 		assertTrue(user.getRequiredActions().contains(UserModel.RequiredAction.UPDATE_EMAIL.name()));
 
-		driver.navigate().to(fetchEmailConfirmationLink(newEmail));
+		driver.navigate().to(fetchEmailConfirmationLink("new@localhost"));
 
 		infoPage.assertCurrent();
 		assertEquals("The account email has been successfully updated to new@localhost.", infoPage.getInfo());
-	}
-
-	@Test
-	public void updateEmail() throws Exception {
-		changeEmailUsingRequiredAction("new@localhost");
 
 		events.expect(EventType.UPDATE_EMAIL)
 				.detail(Details.PREVIOUS_EMAIL, "test-user@localhost")
 				.detail(Details.UPDATED_EMAIL, "new@localhost");
 
-		UserRepresentation user = ActionUtil.findUserWithAdminClient(adminClient, "test-user@localhost");
+		user = ActionUtil.findUserWithAdminClient(adminClient, "test-user@localhost");
 		assertEquals("new@localhost", user.getEmail());
 		assertFalse(user.getRequiredActions().contains(UserModel.RequiredAction.UPDATE_EMAIL.name()));
 	}

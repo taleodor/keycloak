@@ -41,25 +41,11 @@ import java.util.stream.Collectors;
  */
 public class JpaMapRoleEntityDelegate extends MapRoleEntityDelegate {
     private final EntityManager em;
-    private final JpaRoleEntity original;
 
     private Set<String> compositeRoles;
 
-    @Override
-    public void setId(String id) {
-        if (super.getId() == null) {
-            super.setId(id);
-            // As the entity will be used when creating the composite roles, it needs to be persisted before that.
-            // The ID not being set indicates a new entity that hasn't been persisted yet, and the ID is the minimum field for persisting it.
-            em.persist(original);
-        } else {
-            super.setId(id);
-        }
-    }
-
     public JpaMapRoleEntityDelegate(JpaRoleEntity original, EntityManager em) {
         super(new JpaRoleDelegateProvider(original, em));
-        this.original = original;
         this.em = em;
     }
 
@@ -78,9 +64,7 @@ public class JpaMapRoleEntityDelegate extends MapRoleEntityDelegate {
         Query query = em.createNamedQuery("deleteAllChildRolesFromCompositeRole");
         query.setParameter("roleId", StringKeyConverter.UUIDKey.INSTANCE.fromString(getId()));
         query.executeUpdate();
-        if (compositeRoles != null) {
-            compositeRoles.forEach(this::addCompositeRole);
-        }
+        compositeRoles.forEach(this::addCompositeRole);
         this.compositeRoles = compositeRoles;
     }
 

@@ -354,9 +354,10 @@ public class KeycloakServer {
     }
 
     public void importRealm(RealmRepresentation rep) {
+        KeycloakSession session = sessionFactory.create();;
+        session.getTransactionManager().begin();
 
-        try (KeycloakSession session = sessionFactory.create()) {
-            session.getTransactionManager().begin();
+        try {
             RealmManager manager = new RealmManager(session);
 
             if (rep.getId() != null && manager.getRealm(rep.getId()) != null) {
@@ -371,17 +372,25 @@ public class KeycloakServer {
             RealmModel realm = manager.importRealm(rep);
 
             info("Imported realm " + realm.getName());
+
+            session.getTransactionManager().commit();
+        } finally {
+            session.close();
         }
     }
 
     protected void setupDevConfig() {
         if (System.getProperty("keycloak.createAdminUser", "true").equals("true")) {
-            try (KeycloakSession session = sessionFactory.create()) {
+            KeycloakSession session = sessionFactory.create();
+            try {
                 session.getTransactionManager().begin();
                 if (new ApplianceBootstrap(session).isNoMasterUser()) {
                     new ApplianceBootstrap(session).createMasterRealmUser("admin", "admin");
                     log.info("Created master user with credentials admin:admin");
                 }
+                session.getTransactionManager().commit();
+            } finally {
+                session.close();
             }
         }
     }

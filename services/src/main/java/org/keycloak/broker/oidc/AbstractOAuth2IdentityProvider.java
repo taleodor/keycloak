@@ -19,7 +19,7 @@ package org.keycloak.broker.oidc;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jboss.logging.Logger;
-import org.keycloak.http.HttpRequest;
+import org.jboss.resteasy.spi.HttpRequest;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.OAuthErrorException;
 import org.keycloak.broker.provider.AbstractIdentityProvider;
@@ -69,6 +69,7 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.ws.rs.GET;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -120,7 +121,7 @@ public abstract class AbstractOAuth2IdentityProvider<C extends OAuth2IdentityPro
 
     @Override
     public Object callback(RealmModel realm, AuthenticationCallback callback, EventBuilder event) {
-        return new Endpoint(callback, realm, event, this);
+        return new Endpoint(callback, realm, event);
     }
 
     @Override
@@ -136,7 +137,7 @@ public abstract class AbstractOAuth2IdentityProvider<C extends OAuth2IdentityPro
 
     @Override
     public Response retrieveToken(KeycloakSession session, FederatedIdentityModel identity) {
-        return Response.ok(identity.getToken()).type(MediaType.APPLICATION_JSON).build();
+        return Response.ok(identity.getToken()).build();
     }
 
     @Override
@@ -449,29 +450,27 @@ public abstract class AbstractOAuth2IdentityProvider<C extends OAuth2IdentityPro
         return new AsymmetricSignatureProvider(session, alg).signer();
     }
 
-    protected static class Endpoint {
-        protected final AuthenticationCallback callback;
-        protected final RealmModel realm;
-        protected final EventBuilder event;
-        private final AbstractOAuth2IdentityProvider provider;
+    protected class Endpoint {
+        protected AuthenticationCallback callback;
+        protected RealmModel realm;
+        protected EventBuilder event;
 
-        protected final KeycloakSession session;
+        @Context
+        protected KeycloakSession session;
 
-        protected final ClientConnection clientConnection;
+        @Context
+        protected ClientConnection clientConnection;
 
-        protected final HttpHeaders headers;
+        @Context
+        protected HttpHeaders headers;
 
-        protected final HttpRequest httpRequest;
+        @Context
+        protected HttpRequest httpRequest;
 
-        public Endpoint(AuthenticationCallback callback, RealmModel realm, EventBuilder event, AbstractOAuth2IdentityProvider provider) {
+        public Endpoint(AuthenticationCallback callback, RealmModel realm, EventBuilder event) {
             this.callback = callback;
             this.realm = realm;
             this.event = event;
-            this.provider = provider;
-            this.session = provider.session;
-            this.clientConnection = session.getContext().getConnection();
-            this.httpRequest = session.getContext().getHttpRequest();
-            this.headers = session.getContext().getRequestHeaders();
         }
 
         @GET
@@ -486,10 +485,8 @@ public abstract class AbstractOAuth2IdentityProvider<C extends OAuth2IdentityPro
                 AuthenticationSessionModel authSession = this.callback.getAndVerifyAuthenticationSession(state);
                 session.getContext().setAuthenticationSession(authSession);
 
-                OAuth2IdentityProviderConfig providerConfig = provider.getConfig();
-
                 if (error != null) {
-                    logger.error(error + " for broker login " + providerConfig.getProviderId());
+                    logger.error(error + " for broker login " + getConfig().getProviderId());
                     if (error.equals(ACCESS_DENIED)) {
                         return callback.cancelled();
                     } else if (error.equals(OAuthErrorException.LOGIN_REQUIRED) || error.equals(OAuthErrorException.INTERACTION_REQUIRED)) {
@@ -502,16 +499,16 @@ public abstract class AbstractOAuth2IdentityProvider<C extends OAuth2IdentityPro
                 if (authorizationCode != null) {
                     String response = generateTokenRequest(authorizationCode).asString();
 
-                    BrokeredIdentityContext federatedIdentity = provider.getFederatedIdentity(response);
+                    BrokeredIdentityContext federatedIdentity = getFederatedIdentity(response);
 
-                    if (providerConfig.isStoreToken()) {
+                    if (getConfig().isStoreToken()) {
                         // make sure that token wasn't already set by getFederatedIdentity();
                         // want to be able to allow provider to set the token itself.
                         if (federatedIdentity.getToken() == null)federatedIdentity.setToken(response);
                     }
 
-                    federatedIdentity.setIdpConfig(providerConfig);
-                    federatedIdentity.setIdp(provider);
+                    federatedIdentity.setIdpConfig(getConfig());
+                    federatedIdentity.setIdp(AbstractOAuth2IdentityProvider.this);
                     federatedIdentity.setAuthenticationSession(authSession);
 
                     return callback.authenticated(federatedIdentity);
@@ -532,14 +529,13 @@ public abstract class AbstractOAuth2IdentityProvider<C extends OAuth2IdentityPro
 
         public SimpleHttp generateTokenRequest(String authorizationCode) {
             KeycloakContext context = session.getContext();
-            OAuth2IdentityProviderConfig providerConfig = provider.getConfig();
-            SimpleHttp tokenRequest = SimpleHttp.doPost(providerConfig.getTokenUrl(), session)
+            SimpleHttp tokenRequest = SimpleHttp.doPost(getConfig().getTokenUrl(), session)
                     .param(OAUTH2_PARAMETER_CODE, authorizationCode)
                     .param(OAUTH2_PARAMETER_REDIRECT_URI, Urls.identityProviderAuthnResponse(context.getUri().getBaseUri(),
-                            providerConfig.getAlias(), context.getRealm().getName()).toString())
+                            getConfig().getAlias(), context.getRealm().getName()).toString())
                     .param(OAUTH2_PARAMETER_GRANT_TYPE, OAUTH2_GRANT_TYPE_AUTHORIZATION_CODE);
 
-            if (providerConfig.isPkceEnabled()) {
+            if (getConfig().isPkceEnabled()) {
 
                 // reconstruct the original code verifier that was used to generate the code challenge from the HttpRequest.
                 String stateParam = session.getContext().getUri().getQueryParameters().getFirst(OAuth2Constants.STATE);
@@ -575,7 +571,7 @@ public abstract class AbstractOAuth2IdentityProvider<C extends OAuth2IdentityPro
                 tokenRequest.param(OAuth2Constants.CODE_VERIFIER, brokerCodeChallenge);
             }
 
-            return provider.authenticateTokenRequest(tokenRequest);
+            return authenticateTokenRequest(tokenRequest);
         }
 
     }

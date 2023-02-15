@@ -30,7 +30,6 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.RealmProvider;
 import org.keycloak.models.UserModel;
-import org.keycloak.models.cache.authorization.CachedStoreFactoryProvider;
 import org.keycloak.models.utils.KeycloakModelUtils;
 import org.keycloak.models.utils.ModelToRepresentation;
 import org.keycloak.representations.idm.authorization.UmaPermissionRepresentation;
@@ -49,7 +48,7 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 
-@RequireProvider(CachedStoreFactoryProvider.class)
+@RequireProvider(AuthorizationProvider.class)
 @RequireProvider(RealmProvider.class)
 @RequireProvider(ClientProvider.class)
 public class ConcurrentAuthzTest extends KeycloakModelTest {
@@ -61,7 +60,7 @@ public class ConcurrentAuthzTest extends KeycloakModelTest {
 
     @Override
     protected void createEnvironment(KeycloakSession s) {
-        RealmModel realm = createRealm(s, "test");
+        RealmModel realm = s.realms().createRealm("test");
         realm.setDefaultRole(s.roles().addRealmRole(realm, Constants.DEFAULT_ROLES_ROLE_PREFIX + "-" + realm.getName()));
 
         realmId = realm.getId();

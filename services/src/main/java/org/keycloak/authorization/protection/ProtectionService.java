@@ -17,6 +17,7 @@
  */
 package org.keycloak.authorization.protection;
 
+import org.jboss.resteasy.spi.ResteasyProviderFactory;
 import org.keycloak.OAuthErrorException;
 import org.keycloak.authorization.AuthorizationProvider;
 import org.keycloak.authorization.admin.ResourceSetService;
@@ -34,6 +35,7 @@ import org.keycloak.services.resources.admin.AdminAuth;
 import org.keycloak.services.resources.admin.AdminEventBuilder;
 
 import javax.ws.rs.Path;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response.Status;
 import org.keycloak.authorization.protection.permission.PermissionTicketService;
 import org.keycloak.authorization.protection.policy.UserManagedPermissionService;
@@ -43,15 +45,15 @@ import org.keycloak.authorization.protection.policy.UserManagedPermissionService
  */
 public class ProtectionService {
 
-    private final KeycloakSession session;
+    @Context
+    private KeycloakSession session;
     private final AuthorizationProvider authorization;
 
-    protected final ClientConnection clientConnection;
+    @Context
+    protected ClientConnection clientConnection;
 
     public ProtectionService(AuthorizationProvider authorization) {
-        this.session = authorization.getKeycloakSession();
         this.authorization = authorization;
-        this.clientConnection = session.getContext().getConnection();
     }
 
     @Path("/resource_set")
@@ -59,7 +61,14 @@ public class ProtectionService {
         KeycloakIdentity identity = createIdentity(true);
         ResourceServer resourceServer = getResourceServer(identity);
         ResourceSetService resourceManager = new ResourceSetService(this.session, resourceServer, this.authorization, null, createAdminEventBuilder(identity, resourceServer));
-        return new ResourceService(this.session, resourceServer, identity, resourceManager);
+
+        ResteasyProviderFactory.getInstance().injectProperties(resourceManager);
+
+        ResourceService resource = new ResourceService(this.session, resourceServer, identity, resourceManager);
+
+        ResteasyProviderFactory.getInstance().injectProperties(resource);
+
+        return resource;
     }
 
     private AdminEventBuilder createAdminEventBuilder(KeycloakIdentity identity, ResourceServer resourceServer) {
@@ -75,21 +84,33 @@ public class ProtectionService {
     public Object permission() {
         KeycloakIdentity identity = createIdentity(false);
 
-        return new PermissionService(identity, getResourceServer(identity), this.authorization);
+        PermissionService resource = new PermissionService(identity, getResourceServer(identity), this.authorization);
+
+        ResteasyProviderFactory.getInstance().injectProperties(resource);
+
+        return resource;
     }
     
     @Path("/permission/ticket")
     public Object ticket() {
         KeycloakIdentity identity = createIdentity(false);
 
-        return new PermissionTicketService(identity, getResourceServer(identity), this.authorization);
+        PermissionTicketService resource = new PermissionTicketService(identity, getResourceServer(identity), this.authorization);
+
+        ResteasyProviderFactory.getInstance().injectProperties(resource);
+
+        return resource;
     }
     
     @Path("/uma-policy")
     public Object policy() {
         KeycloakIdentity identity = createIdentity(false);
 
-        return new UserManagedPermissionService(identity, getResourceServer(identity), this.authorization, createAdminEventBuilder(identity, getResourceServer(identity)));
+        UserManagedPermissionService resource = new UserManagedPermissionService(identity, getResourceServer(identity), this.authorization, createAdminEventBuilder(identity, getResourceServer(identity)));
+
+        ResteasyProviderFactory.getInstance().injectProperties(resource);
+
+        return resource;
     }
 
     private KeycloakIdentity createIdentity(boolean checkProtectionScope) {

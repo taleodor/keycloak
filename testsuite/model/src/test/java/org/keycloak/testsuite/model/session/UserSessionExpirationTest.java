@@ -18,6 +18,7 @@
 package org.keycloak.testsuite.model.session;
 
 import org.junit.Test;
+import org.keycloak.common.util.Time;
 import org.keycloak.models.Constants;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
@@ -39,7 +40,7 @@ public class UserSessionExpirationTest extends KeycloakModelTest {
 
     @Override
     public void createEnvironment(KeycloakSession s) {
-        RealmModel realm = createRealm(s, "test");
+        RealmModel realm = s.realms().createRealm("test");
         realm.setDefaultRole(s.roles().addRealmRole(realm, Constants.DEFAULT_ROLES_ROLE_PREFIX + "-" + realm.getName()));
 
         s.users().addUser(realm, "user1").setEmail("user1@localhost");
@@ -66,8 +67,9 @@ public class UserSessionExpirationTest extends KeycloakModelTest {
 
         assertThat(withRealm(realmId, (session, realm) -> session.sessions().getUserSession(realm, uSId)), notNullValue());
 
-        setTimeOffset(5);
+        Time.setOffset(5);
 
         assertThat(withRealm(realmId, (session, realm) -> session.sessions().getUserSession(realm, uSId)), nullValue());
+
     }
 }
